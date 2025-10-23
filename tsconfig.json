@@ -23,15 +23,16 @@
     /* Path mapping */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@/components/*": ["src/components/*"],
-      "@/services/*": ["src/services/*"],
-      "@/context/*": ["src/context/*"],
-      "@/pages/*": ["src/pages/*"],
-      "@/config/*": ["src/config/*"],
-      "@/utils/*": ["src/utils/*"]
+      "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/services/*": ["./src/services/*"],
+      "@/context/*": ["./src/context/*"],
+      "@/pages/*": ["./src/pages/*"],
+      "@/config/*": ["./src/config/*"],
+      "@/utils/*": ["./src/utils/*"],
+      "@/types/*": ["./src/types/*"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "vite.config.ts", "jest.config.js"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
