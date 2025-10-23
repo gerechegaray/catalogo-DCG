@@ -1,21 +1,25 @@
 // Servicio para integrar con Alegra API
+import type { 
+  AlegraProduct, 
+  NormalizedProduct, 
+  AlegraPriceList 
+} from '@/types/alegra'
+import { config, validateConfig } from '@/config/appConfig'
+
 class AlegraService {
+  private baseURL: string
+  private apiKey: string
+  private headers: Record<string, string>
+
   constructor() {
-    // Configuración de Alegra - TEMPORAL para pruebas
-    this.baseURL = 'https://api.alegra.com/api/v1'
-    this.apiKey = 'gerechegaray@gmail.com:79e207afe8c4464a8d90'
+    // Usar configuración centralizada
+    this.apiKey = config.alegra.apiKey
+    this.baseURL = config.alegra.baseURL
     
-    // Configuración alternativa desde variables de entorno (si están disponibles)
-    const envApiKey = import.meta.env.VITE_ALEGRA_API_KEY
-    const envBaseUrl = import.meta.env.VITE_ALEGRA_BASE_URL
+    // Validar configuración
+    validateConfig()
     
-    if (envApiKey && envApiKey !== 'tu-api-key-de-alegra') {
-      this.apiKey = envApiKey
-      this.baseURL = envBaseUrl || this.baseURL
-      console.log('✅ API Key de Alegra cargada desde variables de entorno')
-    } else {
-      console.log('⚠️ Usando API Key de Alegra hardcodeada (temporal)')
-    }
+    console.log('✅ AlegraService inicializado correctamente')
     
     this.headers = {
       'Authorization': `Basic ${btoa(this.apiKey + ':')}`,
@@ -24,11 +28,11 @@ class AlegraService {
   }
 
   // Obtener todos los productos con paginación automática
-  async getAllProducts() {
+  async getAllProducts(): Promise<NormalizedProduct[]> {
     try {
       console.log('🔄 Iniciando sincronización con Alegra...')
       
-      let allProducts = []
+      let allProducts: AlegraProduct[] = []
       let page = 1
       let hasMore = true
       
@@ -43,11 +47,10 @@ class AlegraService {
           throw new Error(`Error en Alegra API: ${response.status}`)
         }
         
-        const data = await response.json()
+        const data: AlegraProduct[] = await response.json()
         
-        // Procesar productos de esta página
-        const processedProducts = this.processProducts(data)
-        allProducts = [...allProducts, ...processedProducts]
+        // Agregar productos de esta página
+        allProducts = [...allProducts, ...data]
         
         // Verificar si hay más páginas
         hasMore = data.length === 30 // Si devuelve menos de 30, no hay más páginas
@@ -62,7 +65,9 @@ class AlegraService {
       }
       
       console.log(`✅ Sincronización completa: ${allProducts.length} productos obtenidos`)
-      return allProducts
+      
+      // Procesar productos al formato normalizado
+      return this.processProducts(allProducts)
       
     } catch (error) {
       console.error('❌ Error en sincronización con Alegra:', error)
@@ -71,7 +76,7 @@ class AlegraService {
   }
 
   // Procesar productos de Alegra al formato de nuestra app
-  processProducts(alegraProducts) {
+  private processProducts(alegraProducts: AlegraProduct[]): NormalizedProduct[] {
     return alegraProducts
       .filter(product => product.status === 'active') // Solo productos activos
       .map(product => {
@@ -82,9 +87,9 @@ class AlegraService {
       const price = this.getPriceForUserType(product.price, userType)
       
       return {
-        id: product.id,
+        id: product.id.toString(),
         name: product.name,
-        description: product.description, // Marca/Laboratorio
+        description: product.description || '', // Marca/Laboratorio
         price: price,
         stock: product.inventory?.availableQuantity || 0,
         category: product.description || '', // Marca/Laboratorio como categoría principal
@@ -100,13 +105,14 @@ class AlegraService {
         // Datos adicionales
         status: product.status,
         warehouses: product.inventory?.warehouses || [],
-        priceLists: product.price || []
+        priceLists: product.price || [],
+        originalData: product
       }
     })
   }
 
   // Determinar tipo de usuario basado en las listas de precios
-  determineUserTypeFromPriceLists(priceLists) {
+  private determineUserTypeFromPriceLists(priceLists: AlegraPriceList[]): 'vet' | 'pet' {
     if (!priceLists || !Array.isArray(priceLists)) {
       return 'vet' // Por defecto veterinarios
     }
@@ -118,7 +124,7 @@ class AlegraService {
   }
 
   // Determinar si un producto es visible para pet shops
-  isVisibleForPetShops(priceLists) {
+  isVisibleForPetShops(priceLists: AlegraPriceList[]): boolean {
     if (!priceLists || !Array.isArray(priceLists)) {
       return false
     }
@@ -130,12 +136,12 @@ class AlegraService {
   }
 
   // Obtener precio según el tipo de usuario
-  getPriceForUserType(priceLists, userType) {
+  private getPriceForUserType(priceLists: AlegraPriceList[], userType: 'vet' | 'pet'): number {
     if (!priceLists || !Array.isArray(priceLists)) {
       return 0
     }
     
-    let targetPriceList = null
+    let targetPriceList: AlegraPriceList | undefined = undefined
     
     if (userType === 'pet') {
       // Para pet shops, buscar lista "pet" (precio específico para pet shops)
@@ -159,12 +165,12 @@ class AlegraService {
       targetPriceList = priceLists[0]
     }
     
-    return targetPriceList ? parseFloat(targetPriceList.price) : 0
+    return targetPriceList ? parseFloat(targetPriceList.price.toString()) : 0
   }
 
   // Mapear categorías de Alegra a nuestras categorías
-  mapCategory(alegraCategory) {
-    const categoryMap = {
+  mapCategory(alegraCategory: string): string {
+    const categoryMap: Record<string, string> = {
       'medicamentos': 'medicamentos',
       'vacunas': 'vacunas',
       'equipos': 'equipos',
@@ -179,12 +185,12 @@ class AlegraService {
   }
 
   // Determinar si el producto es para veterinarios o pet shops
-  determineUserType(product) {
+  determineUserType(product: AlegraProduct): 'vet' | 'pet' {
     const veterinaryKeywords = ['medicamento', 'vacuna', 'equipo', 'instrumento', 'reactivo']
     const petShopKeywords = ['alimento', 'juguete', 'accesorio', 'higiene', 'cama']
     
     const productName = (product.name || '').toLowerCase()
-    const category = (product.category?.name || '').toLowerCase()
+    const category = (product.itemCategory?.name || '').toLowerCase()
     
     // Verificar palabras clave veterinarias
     if (veterinaryKeywords.some(keyword => 
@@ -205,19 +211,19 @@ class AlegraService {
   }
 
   // Obtener productos por tipo de usuario
-  async getProductsForUserType(userType) {
+  async getProductsForUserType(userType: 'vet' | 'pet'): Promise<NormalizedProduct[]> {
     const allProducts = await this.getAllProducts()
     return allProducts.filter(product => product.userType === userType)
   }
 
   // Obtener productos por categoría
-  async getProductsByCategory(category) {
+  async getProductsByCategory(category: string): Promise<NormalizedProduct[]> {
     const allProducts = await this.getAllProducts()
     return allProducts.filter(product => product.category === category)
   }
 
   // Buscar productos por nombre
-  async searchProducts(query) {
+  async searchProducts(query: string): Promise<NormalizedProduct[]> {
     const allProducts = await this.getAllProducts()
     const searchTerm = query.toLowerCase()
     

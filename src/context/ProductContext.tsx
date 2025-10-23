@@ -2,9 +2,18 @@ import React, { createContext, useContext, useReducer, useEffect, useCallback } 
 import { useAuth } from './AuthContext'
 import alegraService from '../services/alegraService'
 import cacheService from '../services/cacheService'
+import type { 
+  ProductContextType, 
+  ProductProviderProps, 
+  ProductState, 
+  ProductAction, 
+  CartItem, 
+  NormalizedProduct,
+  UserType 
+} from '@/types/contexts'
 
 // Estado inicial
-const initialState = {
+const initialState: ProductState = {
   // Productos
   products: [],
   filteredProducts: [],
@@ -39,26 +48,26 @@ const initialState = {
 
 // Tipos de acciones
 const actionTypes = {
-  SET_LOADING: 'SET_LOADING',
-  SET_ERROR: 'SET_ERROR',
-  SET_PRODUCTS: 'SET_PRODUCTS',
-  SET_FILTERED_PRODUCTS: 'SET_FILTERED_PRODUCTS',
-  SET_FILTERS: 'SET_FILTERS',
-  SET_CATEGORY: 'SET_CATEGORY',
-  SET_SUBCATEGORY: 'SET_SUBCATEGORY',
-  SET_SEARCH: 'SET_SEARCH',
-  SET_NAVBAR_CATEGORY: 'SET_NAVBAR_CATEGORY',
-  CLEAR_FILTERS: 'CLEAR_FILTERS',
-  ADD_SELECTED_PRODUCT: 'ADD_SELECTED_PRODUCT',
-  REMOVE_SELECTED_PRODUCT: 'REMOVE_SELECTED_PRODUCT',
-  CLEAR_SELECTED_PRODUCTS: 'CLEAR_SELECTED_PRODUCTS',
-  UPDATE_PRODUCT_QUANTITY: 'UPDATE_PRODUCT_QUANTITY',
-  SET_CACHE_STATUS: 'SET_CACHE_STATUS',
-  SET_ANALYTICS: 'SET_ANALYTICS'
+  SET_LOADING: 'SET_LOADING' as const,
+  SET_ERROR: 'SET_ERROR' as const,
+  SET_PRODUCTS: 'SET_PRODUCTS' as const,
+  SET_FILTERED_PRODUCTS: 'SET_FILTERED_PRODUCTS' as const,
+  SET_FILTERS: 'SET_FILTERS' as const,
+  SET_CATEGORY: 'SET_CATEGORY' as const,
+  SET_SUBCATEGORY: 'SET_SUBCATEGORY' as const,
+  SET_SEARCH: 'SET_SEARCH' as const,
+  SET_NAVBAR_CATEGORY: 'SET_NAVBAR_CATEGORY' as const,
+  CLEAR_FILTERS: 'CLEAR_FILTERS' as const,
+  ADD_SELECTED_PRODUCT: 'ADD_SELECTED_PRODUCT' as const,
+  REMOVE_SELECTED_PRODUCT: 'REMOVE_SELECTED_PRODUCT' as const,
+  CLEAR_SELECTED_PRODUCTS: 'CLEAR_SELECTED_PRODUCTS' as const,
+  UPDATE_PRODUCT_QUANTITY: 'UPDATE_PRODUCT_QUANTITY' as const,
+  SET_CACHE_STATUS: 'SET_CACHE_STATUS' as const,
+  SET_ANALYTICS: 'SET_ANALYTICS' as const
 }
 
 // Reducer
-function productReducer(state, action) {
+function productReducer(state: ProductState, action: ProductAction): ProductState {
   switch (action.type) {
     case actionTypes.SET_LOADING:
       return { ...state, loading: action.payload }
@@ -159,10 +168,10 @@ function productReducer(state, action) {
 }
 
 // Context
-const ProductContext = createContext()
+const ProductContext = createContext<ProductContextType | undefined>(undefined)
 
 // Provider
-export const ProductProvider = ({ children }) => {
+export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(productReducer, initialState)
   const { getFilteredProducts, userType } = useAuth()
 
@@ -179,9 +188,9 @@ export const ProductProvider = ({ children }) => {
   }, [state.products.length, state.filters.category, state.filters.subcategory, state.filters.search, userType])
 
   // Normalizar datos de Alegra
-  const normalizeAlegraProduct = (product) => {
+  const normalizeAlegraProduct = (product: any): NormalizedProduct => {
     // Función auxiliar para extraer precio
-    const extractPrice = (product) => {
+    const extractPrice = (product: any): number => {
       // Si ya viene procesado desde alegraService, usar directamente
       if (typeof product.price === 'number') return product.price
       
@@ -191,17 +200,17 @@ export const ProductProvider = ({ children }) => {
         let targetPriceList = null
         
         if (userType === 'pet') {
-          targetPriceList = product.priceLists.find(price => 
+          targetPriceList = product.priceLists.find((price: any) => 
             price.name && price.name.toLowerCase().includes('pet')
           )
         } else {
-          targetPriceList = product.priceLists.find(price => 
+          targetPriceList = product.priceLists.find((price: any) => 
             price.name && price.name.toLowerCase().includes('general')
           )
         }
         
         if (!targetPriceList) {
-          targetPriceList = product.priceLists.find(price => price.main === true)
+          targetPriceList = product.priceLists.find((price: any) => price.main === true)
         }
         
         if (!targetPriceList && product.priceLists.length > 0) {
@@ -220,7 +229,7 @@ export const ProductProvider = ({ children }) => {
     }
 
     // Función auxiliar para extraer stock
-    const extractStock = (product) => {
+    const extractStock = (product: any): number => {
       // Si ya viene procesado desde alegraService, usar directamente
       if (typeof product.stock === 'number') return product.stock
       
@@ -250,7 +259,7 @@ export const ProductProvider = ({ children }) => {
   }
 
   // Cargar productos desde cache o Alegra
-  const loadProducts = async () => {
+  const loadProducts = async (): Promise<void> => {
     try {
       dispatch({ type: actionTypes.SET_LOADING, payload: true })
       
@@ -277,79 +286,79 @@ export const ProductProvider = ({ children }) => {
         dispatch({ type: actionTypes.SET_CACHE_STATUS, payload: 'valid' })
       }
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error cargando productos:', error)
       dispatch({ type: actionTypes.SET_ERROR, payload: error.message })
       dispatch({ type: actionTypes.SET_CACHE_STATUS, payload: 'error' })
     }
   }
 
-      // Aplicar filtros
-      const applyFilters = () => {
-        let filtered = [...state.products]
-        
-        // Filtro automático por tipo de usuario (desde AuthContext)
-        filtered = getFilteredProducts(filtered)
-        
-        // Filtro por categoría (marca/laboratorio)
-        if (state.filters.category) {
-          filtered = filtered.filter(product => product.category && product.category === state.filters.category)
-        }
+  // Aplicar filtros
+  const applyFilters = (): void => {
+    let filtered = [...state.products]
+    
+    // Filtro automático por tipo de usuario (desde AuthContext)
+    filtered = getFilteredProducts(filtered)
+    
+    // Filtro por categoría (marca/laboratorio)
+    if (state.filters.category) {
+      filtered = filtered.filter(product => product.category && product.category === state.filters.category)
+    }
 
-        // Filtro por subcategoría
-        if (state.filters.subcategory) {
-          filtered = filtered.filter(product => product.subcategory && product.subcategory === state.filters.subcategory)
-        }
+    // Filtro por subcategoría
+    if (state.filters.subcategory) {
+      filtered = filtered.filter(product => product.subcategory && product.subcategory === state.filters.subcategory)
+    }
 
-        // Filtro por búsqueda
-        if (state.filters.search) {
-          const searchTerm = state.filters.search.toLowerCase()
-          filtered = filtered.filter(product =>
-            (product.name && product.name.toLowerCase().includes(searchTerm)) ||
-            (product.description && product.description.toLowerCase().includes(searchTerm)) ||
-            (product.supplier && product.supplier.toLowerCase().includes(searchTerm)) ||
-            (product.subcategory && product.subcategory.toLowerCase().includes(searchTerm))
-          )
-        }
-        
-        dispatch({ type: actionTypes.SET_FILTERED_PRODUCTS, payload: filtered })
-      }
+    // Filtro por búsqueda
+    if (state.filters.search) {
+      const searchTerm = state.filters.search.toLowerCase()
+      filtered = filtered.filter(product =>
+        (product.name && product.name.toLowerCase().includes(searchTerm)) ||
+        (product.description && product.description.toLowerCase().includes(searchTerm)) ||
+        (product.supplier && product.supplier.toLowerCase().includes(searchTerm)) ||
+        (product.subcategory && product.subcategory.toLowerCase().includes(searchTerm))
+      )
+    }
+    
+    dispatch({ type: actionTypes.SET_FILTERED_PRODUCTS, payload: filtered })
+  }
 
   // Acciones con useCallback para evitar recreaciones
-  const setUserType = useCallback((userType) => {
+  const setUserType = useCallback((userType: UserType): void => {
     dispatch({ type: actionTypes.SET_FILTERS, payload: { userType } })
   }, [])
   
-  const setCategory = useCallback((category) => {
+  const setCategory = useCallback((category: string): void => {
     dispatch({ type: actionTypes.SET_CATEGORY, payload: category })
   }, [])
   
-  const setSubcategory = useCallback((subcategory) => {
+  const setSubcategory = useCallback((subcategory: string): void => {
     dispatch({ type: actionTypes.SET_SUBCATEGORY, payload: subcategory })
   }, [])
   
-  const setSearch = useCallback((search) => {
+  const setSearch = useCallback((search: string): void => {
     dispatch({ type: actionTypes.SET_SEARCH, payload: search })
   }, [])
   
-  const setNavbarCategory = useCallback((navbarCategory) => {
+  const setNavbarCategory = useCallback((navbarCategory: string): void => {
     dispatch({ type: actionTypes.SET_NAVBAR_CATEGORY, payload: navbarCategory })
   }, [])
   
-  const clearFilters = useCallback(() => {
+  const clearFilters = useCallback((): void => {
     dispatch({ type: actionTypes.CLEAR_FILTERS })
   }, [])
   
-  const addSelectedProduct = useCallback((product) => {
+  const addSelectedProduct = useCallback((product: NormalizedProduct): void => {
     dispatch({ type: actionTypes.ADD_SELECTED_PRODUCT, payload: product })
     cacheService.recordProductSelection(product.id, state.filters.userType)
   }, [state.filters.userType])
   
-  const removeSelectedProduct = useCallback((productId) => {
+  const removeSelectedProduct = useCallback((productId: string): void => {
     dispatch({ type: actionTypes.REMOVE_SELECTED_PRODUCT, payload: productId })
   }, [])
   
-  const updateProductQuantity = useCallback((productId, quantity) => {
+  const updateProductQuantity = useCallback((productId: string, quantity: number): void => {
     if (quantity <= 0) {
       removeSelectedProduct(productId)
     } else {
@@ -360,15 +369,15 @@ export const ProductProvider = ({ children }) => {
     }
   }, [removeSelectedProduct])
   
-  const clearSelectedProducts = useCallback(() => {
+  const clearSelectedProducts = useCallback((): void => {
     dispatch({ type: actionTypes.CLEAR_SELECTED_PRODUCTS })
   }, [])
   
-  const reloadProducts = useCallback(() => {
+  const reloadProducts = useCallback((): void => {
     loadProducts()
   }, [])
   
-  const loadAnalytics = useCallback(async () => {
+  const loadAnalytics = useCallback(async (): Promise<void> => {
     try {
       const analyticsData = await cacheService.getAnalytics()
       dispatch({ type: actionTypes.SET_ANALYTICS, payload: analyticsData })
@@ -378,7 +387,7 @@ export const ProductProvider = ({ children }) => {
     }
   }, [])
   
-  const recordProductView = useCallback((productId) => {
+  const recordProductView = useCallback((productId: string): void => {
     cacheService.recordProductView(productId, state.filters.userType)
   }, [state.filters.userType])
 
@@ -398,7 +407,7 @@ export const ProductProvider = ({ children }) => {
     recordProductView
   }
 
-  const value = {
+  const value: ProductContextType = {
     ...state,
     ...actions
   }
@@ -411,7 +420,7 @@ export const ProductProvider = ({ children }) => {
 }
 
 // Hook para usar el contexto
-export const useProducts = () => {
+export const useProducts = (): ProductContextType => {
   const context = useContext(ProductContext)
   if (!context) {
     throw new Error('useProducts debe usarse dentro de ProductProvider')

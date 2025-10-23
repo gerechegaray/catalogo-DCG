@@ -1,12 +1,17 @@
 // Servicio para generar mensajes de WhatsApp
+import type { WhatsAppProduct, ClientInfo, WhatsAppMessage } from '@/types/whatsapp'
+
 class WhatsAppService {
+  private baseMessage: string
+  private footerMessage: string
+
   constructor() {
     this.baseMessage = '🛒 *Nuevo Pedido*'
     this.footerMessage = '\n\n¿Te interesa alguno de estos productos?'
   }
 
   // Generar mensaje de WhatsApp con productos seleccionados
-  generateMessage(selectedProducts, clientInfo = {}) {
+  generateMessage(selectedProducts: WhatsAppProduct[], clientInfo: ClientInfo = {}): WhatsAppMessage {
     try {
       if (!selectedProducts || selectedProducts.length === 0) {
         throw new Error('No hay productos seleccionados')
@@ -59,7 +64,12 @@ class WhatsAppService {
       // Agregar footer
       message += this.footerMessage
 
-      return message
+      return {
+        message,
+        encodedMessage: encodeURIComponent(message),
+        productCount: selectedProducts.length,
+        totalPrice: total
+      }
       
     } catch (error) {
       console.error('❌ Error generando mensaje de WhatsApp:', error)
@@ -68,18 +78,18 @@ class WhatsAppService {
   }
 
   // Formatear precio en pesos colombianos
-  formatPrice(price) {
+  formatPrice(price: number): string {
     return new Intl.NumberFormat('es-CO').format(price)
   }
 
   // Abrir WhatsApp con el mensaje generado
-  openWhatsApp(message, phoneNumber = null) {
+  openWhatsApp(message: string, phoneNumber: string | null = null): void {
     try {
       // Codificar el mensaje para URL
       const encodedMessage = encodeURIComponent(message)
       
       // Construir URL de WhatsApp
-      let whatsappUrl
+      let whatsappUrl: string
       if (phoneNumber) {
         // Si hay número específico, abrir chat directo
         const cleanPhone = phoneNumber.replace(/\D/g, '') // Solo números
@@ -101,13 +111,17 @@ class WhatsAppService {
   }
 
   // Generar y enviar mensaje completo
-  async sendMessage(selectedProducts, clientInfo = {}, phoneNumber = null) {
+  async sendMessage(
+    selectedProducts: WhatsAppProduct[], 
+    clientInfo: ClientInfo = {}, 
+    phoneNumber: string | null = null
+  ): Promise<WhatsAppMessage> {
     try {
       // Generar mensaje
-      const message = this.generateMessage(selectedProducts, clientInfo)
+      const messageData = this.generateMessage(selectedProducts, clientInfo)
       
       // Abrir WhatsApp
-      this.openWhatsApp(message, phoneNumber)
+      this.openWhatsApp(messageData.message, phoneNumber)
       
       // Registrar analytics
       if (window.cacheService) {
@@ -115,7 +129,7 @@ class WhatsAppService {
         await window.cacheService.recordWhatsAppClick(productIds, clientInfo.userType || 'unknown')
       }
       
-      return message
+      return messageData
       
     } catch (error) {
       console.error('❌ Error enviando mensaje de WhatsApp:', error)
@@ -124,8 +138,8 @@ class WhatsAppService {
   }
 
   // Generar mensaje de prueba
-  generateTestMessage() {
-    const testProducts = [
+  generateTestMessage(): WhatsAppMessage {
+    const testProducts: WhatsAppProduct[] = [
       {
         id: 1,
         name: 'Antiparasitario Canino',
@@ -144,7 +158,7 @@ class WhatsAppService {
       }
     ]
     
-    const testClientInfo = {
+    const testClientInfo: ClientInfo = {
       name: 'Dr. García',
       phone: '3001234567',
       userType: 'vet'
@@ -154,7 +168,7 @@ class WhatsAppService {
   }
 
   // Validar productos seleccionados
-  validateProducts(products) {
+  validateProducts(products: WhatsAppProduct[]): boolean {
     if (!Array.isArray(products)) {
       throw new Error('Los productos deben ser un array')
     }

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { ProductProvider } from './context/ProductContext'
 import { AuthProvider } from './context/AuthContext'
@@ -8,14 +8,26 @@ import CartHeader from './components/CartHeader'
 import Footer from './components/Footer'
 import ProtectedRoute from './components/ProtectedRoute'
 import ProductSelectionBar from './components/ProductSelectionBar'
-import HomePage from './pages/HomePage'
-import VeterinariosLandingPage from './pages/VeterinariosLandingPage'
-import VeterinariosProductosPage from './pages/VeterinariosPage'
-import PetShopsLandingPage from './pages/PetShopsLandingPage'
-import PetShopsProductosPage from './pages/PetShopsPage'
-import ContactPage from './pages/ContactPage'
-import AdminPage from './pages/AdminPage'
-import ProductDetailPage from './pages/ProductDetailPage'
+
+// Lazy loading de páginas
+const HomePage = React.lazy(() => import('./pages/HomePage'))
+const VeterinariosLandingPage = React.lazy(() => import('./pages/VeterinariosLandingPage'))
+const VeterinariosProductosPage = React.lazy(() => import('./pages/VeterinariosPage'))
+const PetShopsLandingPage = React.lazy(() => import('./pages/PetShopsLandingPage'))
+const PetShopsProductosPage = React.lazy(() => import('./pages/PetShopsPage'))
+const ContactPage = React.lazy(() => import('./pages/ContactPage'))
+const AdminPage = React.lazy(() => import('./pages/AdminPage'))
+const ProductDetailPage = React.lazy(() => import('./pages/ProductDetailPage'))
+
+// Componente de loading
+const LoadingSpinner = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+      <p className="text-gray-600">Cargando...</p>
+    </div>
+  </div>
+)
 
 function App() {
   return (
@@ -25,7 +37,11 @@ function App() {
           <div className="min-h-screen bg-white">
             <Routes>
               {/* Página pública */}
-              <Route path="/" element={<HomePage />} />
+              <Route path="/" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <HomePage />
+                </Suspense>
+              } />
               
               {/* Páginas de presentación */}
               <Route path="/veterinarios" element={
@@ -33,7 +49,9 @@ function App() {
                   <CartProvider>
                     <div>
                       <CartHeader />
-                      <VeterinariosLandingPage />
+                      <Suspense fallback={<LoadingSpinner />}>
+                        <VeterinariosLandingPage />
+                      </Suspense>
                       <Footer />
                     </div>
                   </CartProvider>
@@ -45,7 +63,9 @@ function App() {
                   <CartProvider>
                     <div>
                       <CartHeader />
-                      <PetShopsLandingPage />
+                      <Suspense fallback={<LoadingSpinner />}>
+                        <PetShopsLandingPage />
+                      </Suspense>
                       <Footer />
                     </div>
                   </CartProvider>
@@ -58,7 +78,9 @@ function App() {
                   <CartProvider>
                     <div>
                       <CartHeader />
-                      <VeterinariosProductosPage />
+                      <Suspense fallback={<LoadingSpinner />}>
+                        <VeterinariosProductosPage />
+                      </Suspense>
                       <Footer />
                     </div>
                   </CartProvider>
@@ -70,7 +92,9 @@ function App() {
                   <CartProvider>
                     <div>
                       <CartHeader />
-                      <PetShopsProductosPage />
+                      <Suspense fallback={<LoadingSpinner />}>
+                        <PetShopsProductosPage />
+                      </Suspense>
                       <Footer />
                     </div>
                   </CartProvider>
@@ -83,7 +107,9 @@ function App() {
                   <CartProvider>
                     <div>
                       <CartHeader />
-                      <ProductDetailPage />
+                      <Suspense fallback={<LoadingSpinner />}>
+                        <ProductDetailPage />
+                      </Suspense>
                       <Footer />
                     </div>
                   </CartProvider>
@@ -95,7 +121,9 @@ function App() {
                   <CartProvider>
                     <div>
                       <CartHeader />
-                      <ProductDetailPage />
+                      <Suspense fallback={<LoadingSpinner />}>
+                        <ProductDetailPage />
+                      </Suspense>
                       <Footer />
                     </div>
                   </CartProvider>
@@ -106,7 +134,9 @@ function App() {
               <Route path="/contacto" element={
                 <div>
                   <Header />
-                  <ContactPage />
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <ContactPage />
+                  </Suspense>
                   <Footer />
                 </div>
               } />
@@ -117,7 +147,9 @@ function App() {
                   <CartProvider>
                     <div>
                       <CartHeader />
-                      <AdminPage />
+                      <Suspense fallback={<LoadingSpinner />}>
+                        <AdminPage />
+                      </Suspense>
                       <Footer />
                     </div>
                   </CartProvider>

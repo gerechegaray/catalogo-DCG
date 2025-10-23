@@ -1,23 +1,24 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
+import type { AuthContextType, AuthProviderProps, UserType, NormalizedProduct } from '@/types/contexts'
 
 // Tipos de usuario
 const USER_TYPES = {
-  VET: 'vet',
-  PET: 'pet', 
-  ADMIN: 'admin',
-  PUBLIC: 'public'
+  VET: 'vet' as const,
+  PET: 'pet' as const, 
+  ADMIN: 'admin' as const,
+  PUBLIC: 'public' as const
 }
 
 // Contexto de autenticación
-const AuthContext = createContext()
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 // Provider de autenticación
-export const AuthProvider = ({ children }) => {
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const location = useLocation()
-  const [userType, setUserType] = useState(USER_TYPES.PUBLIC)
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [userType, setUserType] = useState<UserType>(USER_TYPES.PUBLIC)
+  const [isAdmin, setIsAdmin] = useState<boolean>(false)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
 
   // Detectar tipo de usuario basado en la URL
   useEffect(() => {
@@ -50,7 +51,7 @@ export const AuthProvider = ({ children }) => {
   }, [location.pathname])
 
   // Función para autenticar admin
-  const authenticateAdmin = (code) => {
+  const authenticateAdmin = (code: string): boolean => {
     if (code === 'ADMIN2025') {
       setIsAdmin(true)
       setUserType(USER_TYPES.ADMIN)
@@ -62,7 +63,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   // Función para cerrar sesión admin
-  const logoutAdmin = () => {
+  const logoutAdmin = (): void => {
     setIsAdmin(false)
     setUserType(USER_TYPES.PUBLIC)
     setIsAuthenticated(false)
@@ -70,7 +71,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   // Función para verificar si puede acceder a una ruta
-  const canAccess = (route) => {
+  const canAccess = (route: string): boolean => {
     switch (route) {
       case '/veterinarios':
         return userType === USER_TYPES.VET || userType === USER_TYPES.ADMIN
@@ -84,7 +85,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   // Función para obtener productos filtrados por tipo de usuario
-  const getFilteredProducts = (products) => {
+  const getFilteredProducts = (products: NormalizedProduct[]): NormalizedProduct[] => {
     if (userType === USER_TYPES.ADMIN) {
       return products // Admin ve todo
     } else if (userType === USER_TYPES.VET) {
@@ -115,7 +116,7 @@ export const AuthProvider = ({ children }) => {
     return products // Público ve todo
   }
 
-  const value = {
+  const value: AuthContextType = {
     userType,
     isAdmin,
     isAuthenticated,
@@ -134,7 +135,7 @@ export const AuthProvider = ({ children }) => {
 }
 
 // Hook para usar el contexto
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext)
   if (!context) {
     throw new Error('useAuth debe usarse dentro de AuthProvider')

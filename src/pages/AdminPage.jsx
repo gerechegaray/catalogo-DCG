@@ -1,16 +1,27 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, Suspense } from 'react'
 import { Link } from 'react-router-dom'
 import { useProducts } from '../context/ProductContext'
 import { useAuth } from '../context/AuthContext'
 import cacheService from '../services/cacheService'
-import CommunicationsManager from '../components/CommunicationsManager'
-import BrandManager from '../components/BrandManager'
-import FeaturedProductsManager from '../components/FeaturedProductsManager'
+
+// Lazy loading de componentes pesados
+const CommunicationsManager = React.lazy(() => import('../components/CommunicationsManager'))
+const BrandManager = React.lazy(() => import('../components/BrandManager'))
+const FeaturedProductsManager = React.lazy(() => import('../components/FeaturedProductsManager'))
+
+// Componente de loading para componentes admin
+const AdminLoadingSpinner = () => (
+  <div className="flex items-center justify-center p-8">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
+    <span className="text-gray-600">Cargando componente...</span>
+  </div>
+)
 
 const AdminPage = () => {
   const { products, loading, reloadProducts, loadAnalytics, analytics } = useProducts()
   const { logoutAdmin } = useAuth()
   const [loadingAnalytics, setLoadingAnalytics] = useState(false)
+  const [showManagers, setShowManagers] = useState(false)
 
   useEffect(() => {
     loadAnalyticsData()
@@ -71,23 +82,30 @@ const AdminPage = () => {
                 🗑️ Limpiar Cache
               </button>
               
-                  <button
-                    onClick={loadAnalyticsData}
-                    disabled={loadingAnalytics}
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loadingAnalytics ? '📊 Cargando...' : '📊 Actualizar Analytics'}
-                  </button>
-                  
-                  <button
-                    onClick={() => {
-                      logoutAdmin()
-                      window.location.href = '/'
-                    }}
-                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-                  >
-                    🚪 Cerrar Sesión
-                  </button>
+              <button
+                onClick={loadAnalyticsData}
+                disabled={loadingAnalytics}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loadingAnalytics ? '📊 Cargando...' : '📊 Actualizar Analytics'}
+              </button>
+              
+              <button
+                onClick={() => setShowManagers(!showManagers)}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+              >
+                {showManagers ? '📋 Ocultar Gestores' : '📋 Mostrar Gestores'}
+              </button>
+              
+              <button
+                onClick={() => {
+                  logoutAdmin()
+                  window.location.href = '/'
+                }}
+                className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+              >
+                🚪 Cerrar Sesión
+              </button>
             </div>
           </div>
         </div>
@@ -187,20 +205,32 @@ const AdminPage = () => {
           </div>
         </div>
 
-        {/* Gestión de Comunicados */}
-        <div className="mb-8">
-          <CommunicationsManager />
-        </div>
+        {/* Gestión de Comunicados - Solo se carga cuando se necesita */}
+        {showManagers && (
+          <div className="mb-8">
+            <Suspense fallback={<AdminLoadingSpinner />}>
+              <CommunicationsManager />
+            </Suspense>
+          </div>
+        )}
 
-        {/* Gestión de Marcas */}
-        <div className="mb-8">
-          <BrandManager />
-        </div>
+        {/* Gestión de Marcas - Solo se carga cuando se necesita */}
+        {showManagers && (
+          <div className="mb-8">
+            <Suspense fallback={<AdminLoadingSpinner />}>
+              <BrandManager />
+            </Suspense>
+          </div>
+        )}
 
-        {/* Gestión de Productos Destacados */}
-        <div className="mb-8">
-          <FeaturedProductsManager />
-        </div>
+        {/* Gestión de Productos Destacados - Solo se carga cuando se necesita */}
+        {showManagers && (
+          <div className="mb-8">
+            <Suspense fallback={<AdminLoadingSpinner />}>
+              <FeaturedProductsManager />
+            </Suspense>
+          </div>
+        )}
       </div>
     </div>
   )
