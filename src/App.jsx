@@ -19,6 +19,7 @@ const PetShopsProductosPage = React.lazy(() => import('./pages/PetShopsPage'))
 const ContactPage = React.lazy(() => import('./pages/ContactPage'))
 const AdminPage = React.lazy(() => import('./pages/AdminPage'))
 const ProductDetailPage = React.lazy(() => import('./pages/ProductDetailPage'))
+const PublicPage = React.lazy(() => import('./pages/PublicPage'))
 
 // Componente de loading
 const LoadingSpinner = () => (
@@ -155,6 +156,15 @@ function App() {
                   </Suspense>
                   <Footer />
                 </div>
+              </PageTracker>
+            } />
+            
+            {/* Página Pública */}
+            <Route path="/publico" element={
+              <PageTracker>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <PublicPage />
+                </Suspense>
               </PageTracker>
             } />
             
