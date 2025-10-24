@@ -11,12 +11,6 @@ const BrandsGrid = () => {
   const userType = isVeterinarios ? 'veterinarios' : 'petshops'
   const config = getBrandsConfig(userType)
 
-  const handleBrandClick = (brandName) => {
-    // Redirigir a productos filtrados por marca
-    const baseUrl = isVeterinarios ? '/veterinarios/productos' : '/petshops/productos'
-    window.location.href = `${baseUrl}?marca=${encodeURIComponent(brandName)}`
-  }
-
   return (
     <section className="py-16 bg-white">
       <div className="container mx-auto px-4">
@@ -35,15 +29,14 @@ const BrandsGrid = () => {
           {config.brands.map((brand, index) => (
             <div
               key={index}
-              onClick={() => handleBrandClick(brand.name)}
-              className="group cursor-pointer bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 overflow-hidden"
+              className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden"
             >
               <div className="p-6 text-center">
                 <div className="w-full h-20 flex items-center justify-center mb-4 bg-gray-50 rounded-lg">
                   <img
                     src={brand.logo}
                     alt={brand.name}
-                    className="max-h-full max-w-full object-contain group-hover:scale-110 transition-transform duration-300"
+                    className="max-h-full max-w-full object-contain"
                     onError={(e) => {
                       e.target.style.display = 'none'
                       e.target.nextSibling.style.display = 'flex'
@@ -56,7 +49,7 @@ const BrandsGrid = () => {
                     {brand.name}
                   </div>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+                <h3 className="text-lg font-semibold text-gray-900">
                   {brand.name}
                 </h3>
                 {brand.description && (
@@ -67,18 +60,6 @@ const BrandsGrid = () => {
               </div>
             </div>
           ))}
-        </div>
-
-        <div className="text-center mt-12">
-          <button
-            onClick={() => {
-              const baseUrl = isVeterinarios ? '/veterinarios/productos' : '/petshops/productos'
-              window.location.href = baseUrl
-            }}
-            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 rounded-lg font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
-          >
-            Ver Todos los Productos
-          </button>
         </div>
       </div>
     </section>

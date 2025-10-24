@@ -9,11 +9,11 @@ const VeterinariosLandingPage = () => {
       {/* Carrusel Hero dinámico */}
       <SectionCarousel />
 
-      {/* Sección de marcas */}
-      <BrandsGrid />
-
       {/* Productos destacados */}
       <FeaturedProducts />
+
+      {/* Sección de marcas */}
+      <BrandsGrid />
     </div>
   )
 }

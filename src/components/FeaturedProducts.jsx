@@ -130,12 +130,7 @@ const FeaturedProducts = () => {
                     )}
                   <div className="absolute top-4 left-4">
                     <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                      NUEVO
-                    </span>
-                  </div>
-                  <div className="absolute top-4 right-4">
-                    <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                      Stock: {product.stock}
+                      DESTACADO
                     </span>
                   </div>
                   </div>
