@@ -187,7 +187,7 @@ const CommunicationsManager = () => {
               validFrom: today,
               validUntil: `${nextYear}-12-31`
             })
-            console.log(`✅ Actualizado: ${comm.title}`)
+            // console.log(`✅ Actualizado: ${comm.title}`)
           }
         }
         
@@ -451,7 +451,7 @@ const CommunicationsManager = () => {
                           src={comm.image}
                           alt={comm.title}
                           onError={(e) => {
-                            e.target.src = 'https://via.placeholder.com/48x48/cccccc/666666?text=IMG'
+                            e.target.src = '/placeholder-product.svg'
                           }}
                         />
                       </div>

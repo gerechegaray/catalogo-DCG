@@ -19,7 +19,7 @@ class AlegraService {
     // Validar configuración
     validateConfig()
     
-    console.log('✅ AlegraService inicializado correctamente')
+    // console.log('✅ AlegraService inicializado correctamente')
     
     this.headers = {
       'Authorization': `Basic ${btoa(this.apiKey + ':')}`,
@@ -30,14 +30,14 @@ class AlegraService {
   // Obtener todos los productos con paginación automática
   async getAllProducts(): Promise<NormalizedProduct[]> {
     try {
-      console.log('🔄 Iniciando sincronización con Alegra...')
+      // console.log('🔄 Iniciando sincronización con Alegra...')
       
       let allProducts: AlegraProduct[] = []
       let page = 1
       let hasMore = true
       
       while (hasMore) {
-        console.log(`📄 Obteniendo página ${page}...`)
+        // console.log(`📄 Obteniendo página ${page}...`)
         
         const response = await fetch(`${this.baseURL}/items?start=${(page - 1) * 30}&limit=30`, {
           headers: this.headers
@@ -59,12 +59,12 @@ class AlegraService {
         
         // Evitar loops infinitos
         if (page > 50) {
-          console.warn('⚠️ Límite de páginas alcanzado')
+          // console.warn('⚠️ Límite de páginas alcanzado')
           break
         }
       }
       
-      console.log(`✅ Sincronización completa: ${allProducts.length} productos obtenidos`)
+      // console.log(`✅ Sincronización completa: ${allProducts.length} productos obtenidos`)
       
       // Procesar productos al formato normalizado
       return this.processProducts(allProducts)

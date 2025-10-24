@@ -267,13 +267,13 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
       const isCacheValid = await cacheService.isCacheUpToDate()
       
       if (isCacheValid) {
-        console.log('📖 Cargando productos desde cache...')
+        // console.log('📖 Cargando productos desde cache...')
         const cachedProducts = await cacheService.getProductsFromCache()
         // Los productos del cache ya están procesados, no necesitan normalización adicional
         dispatch({ type: actionTypes.SET_PRODUCTS, payload: cachedProducts })
         dispatch({ type: actionTypes.SET_CACHE_STATUS, payload: 'valid' })
       } else {
-        console.log('🔄 Cache expirado, sincronizando con Alegra...')
+        // console.log('🔄 Cache expirado, sincronizando con Alegra...')
         const alegraProducts = await alegraService.getAllProducts()
         
         // Los productos ya vienen procesados desde alegraService.getAllProducts()

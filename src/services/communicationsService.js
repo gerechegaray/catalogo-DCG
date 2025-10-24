@@ -22,7 +22,7 @@ export const getAllCommunications = async () => {
 export const getActiveCommunications = async (section) => {
   try {
     const now = new Date().toISOString().split('T')[0]
-    console.log('🔍 Buscando comunicados activos para sección:', section, 'fecha:', now)
+    // console.log('🔍 Buscando comunicados activos para sección:', section, 'fecha:', now)
     
     // Consulta optimizada con índice compuesto
     const q = query(
@@ -33,34 +33,34 @@ export const getActiveCommunications = async (section) => {
       orderBy('createdAt', 'desc')
     )
     
-    console.log('🔍 Ejecutando consulta Firebase...') // Debug log
+    // console.log('🔍 Ejecutando consulta Firebase...') // Debug log
     const querySnapshot = await getDocs(q)
-    console.log('📊 QuerySnapshot size:', querySnapshot.size) // Debug log
+    // console.log('📊 QuerySnapshot size:', querySnapshot.size) // Debug log
     
     const allCommunications = querySnapshot.docs.map(doc => {
       const data = doc.data()
-      console.log('📄 Comunicado encontrado:', {
-        id: doc.id,
-        title: data.title,
-        section: data.section,
-        active: data.active,
-        validFrom: data.validFrom,
-        validUntil: data.validUntil
-      }) // Debug log
+      // console.log('📄 Comunicado encontrado:', {
+      //   id: doc.id,
+      //   title: data.title,
+      //   section: data.section,
+      //   active: data.active,
+      //   validFrom: data.validFrom,
+      //   validUntil: data.validUntil
+      // }) // Debug log
       return {
         id: doc.id,
         ...data
       }
     })
     
-    console.log('📋 Comunicados encontrados:', allCommunications.length)
+    // console.log('📋 Comunicados encontrados:', allCommunications.length)
     
     // Filtrar por sección
     const filteredCommunications = allCommunications.filter(comm => 
       comm.section === section || comm.section === 'ambos'
     )
     
-    console.log(`🎯 Comunicados para ${section}:`, filteredCommunications.length)
+    // console.log(`🎯 Comunicados para ${section}:`, filteredCommunications.length)
     return filteredCommunications
   } catch (error) {
     console.error('❌ Error al obtener comunicados activos:', error)
@@ -71,13 +71,13 @@ export const getActiveCommunications = async (section) => {
 // Agregar nuevo comunicado
 export const addCommunication = async (communicationData) => {
   try {
-    console.log('➕ Agregando comunicado:', communicationData.title) // Debug log
+    // console.log('➕ Agregando comunicado:', communicationData.title) // Debug log
     const docRef = await addDoc(collection(db, COLLECTION_NAME), {
       ...communicationData,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     })
-    console.log('✅ Comunicado agregado con ID:', docRef.id) // Debug log
+    // console.log('✅ Comunicado agregado con ID:', docRef.id) // Debug log
     return { id: docRef.id, ...communicationData }
   } catch (error) {
     console.error('❌ Error al agregar comunicado:', error)

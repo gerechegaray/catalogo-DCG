@@ -34,7 +34,7 @@ const PetShopsProductosPage = () => {
     if (navbarCategory) {
       // Convertir categoría del navbar a selectedPath
       setSelectedPath([navbarCategory])
-      console.log('🔍 Categoría del navbar detectada:', navbarCategory)
+      // console.log('🔍 Categoría del navbar detectada:', navbarCategory)
     } else {
       setSelectedPath([])
     }

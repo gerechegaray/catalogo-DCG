@@ -79,7 +79,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
               {items.map((item) => (
                 <div key={item.id} className="flex items-center border-b py-4 last:border-b-0">
                   <img
-                    src={item.image || 'https://via.placeholder.com/80'}
+                    src={item.image || '/placeholder-product.svg'}
                     alt={item.name}
                     className="w-16 h-16 object-cover rounded-lg mr-4"
                   />

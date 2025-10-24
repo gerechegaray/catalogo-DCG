@@ -23,7 +23,7 @@ class CacheService {
   // Guardar productos en cache
   async saveProductsToCache(products) {
     try {
-      console.log('💾 Guardando productos en cache...')
+      // console.log('💾 Guardando productos en cache...')
       
       // Limpiar cache anterior
       await this.clearProductsCache()
@@ -39,7 +39,7 @@ class CacheService {
       })
       
       await Promise.all(promises)
-      console.log(`✅ ${products.length} productos guardados en cache`)
+      // console.log(`✅ ${products.length} productos guardados en cache`)
       
     } catch (error) {
       console.error('❌ Error guardando productos en cache:', error)
@@ -50,7 +50,7 @@ class CacheService {
   // Obtener productos del cache
   async getProductsFromCache() {
     try {
-      console.log('📖 Obteniendo productos del cache...')
+      // console.log('📖 Obteniendo productos del cache...')
       
       const productsRef = collection(db, this.productsCollection)
       const q = query(productsRef, orderBy('cachedAt', 'desc'))
@@ -69,7 +69,7 @@ class CacheService {
         }
       })
       
-      console.log(`📖 ${products.length} productos obtenidos del cache`)
+      // console.log(`📖 ${products.length} productos obtenidos del cache`)
       return products
       
     } catch (error) {
@@ -81,7 +81,7 @@ class CacheService {
   // Limpiar cache de productos
   async clearProductsCache() {
     try {
-      console.log('🗑️ Limpiando cache de productos...')
+      // console.log('🗑️ Limpiando cache de productos...')
       
       const productsRef = collection(db, this.productsCollection)
       const snapshot = await getDocs(productsRef)
@@ -89,7 +89,7 @@ class CacheService {
       const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref))
       await Promise.all(deletePromises)
       
-      console.log('✅ Cache de productos limpiado')
+      // console.log('✅ Cache de productos limpiado')
       
     } catch (error) {
       console.error('❌ Error limpiando cache:', error)
@@ -99,7 +99,7 @@ class CacheService {
   // Limpiar todo el cache (productos y analytics)
   async clearAll() {
     try {
-      console.log('🗑️ Limpiando todo el cache...')
+      // console.log('🗑️ Limpiando todo el cache...')
       
       // Limpiar productos
       await this.clearProductsCache()
@@ -111,7 +111,7 @@ class CacheService {
       const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref))
       await Promise.all(deletePromises)
       
-      console.log('✅ Todo el cache limpiado')
+      // console.log('✅ Todo el cache limpiado')
       
     } catch (error) {
       console.error('❌ Error limpiando todo el cache:', error)

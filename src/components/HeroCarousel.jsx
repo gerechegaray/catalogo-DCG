@@ -9,7 +9,7 @@ const HeroCarousel = () => {
       title: "NUEVOS PRODUCTOS ELMER",
       subtitle: "MEDICAMENTOS CONDUCTUALES",
       description: "Descubre la nueva línea de productos para el manejo del comportamiento animal",
-      image: "https://via.placeholder.com/1200x400/1e40af/ffffff?text=ELMER+PRODUCTOS",
+      image: "/placeholder-product.svg",
       buttonText: "Ver Productos",
       buttonLink: "/veterinarios",
       badge: "NUEVO"
@@ -19,7 +19,7 @@ const HeroCarousel = () => {
       title: "PROMOCIÓN VACUNAS",
       subtitle: "DESCUENTOS ESPECIALES",
       description: "Aprovecha nuestros descuentos en vacunas e inmunológicos para el mes de enero",
-      image: "https://via.placeholder.com/1200x400/059669/ffffff?text=VACUNAS+PROMO",
+      image: "/placeholder-product.svg",
       buttonText: "Ver Promociones",
       buttonLink: "/veterinarios",
       badge: "PROMO"
@@ -29,7 +29,7 @@ const HeroCarousel = () => {
       title: "ALIMENTOS PREMIUM",
       subtitle: "OLD PRINCE & COMPANY",
       description: "Nueva llegada de alimentos premium para perros y gatos con descuentos especiales",
-      image: "https://via.placeholder.com/1200x400/dc2626/ffffff?text=ALIMENTOS+PREMIUM",
+      image: "/placeholder-product.svg",
       buttonText: "Ver Alimentos",
       buttonLink: "/petshops",
       badge: "NUEVO"
@@ -39,7 +39,7 @@ const HeroCarousel = () => {
       title: "EQUIPOS MÉDICOS",
       subtitle: "TECNOLOGÍA AVANZADA",
       description: "Instrumentos y equipos de última generación para clínicas veterinarias",
-      image: "https://via.placeholder.com/1200x400/7c3aed/ffffff?text=EQUIPOS+MEDICOS",
+      image: "/placeholder-product.svg",
       buttonText: "Ver Equipos",
       buttonLink: "/veterinarios",
       badge: "OFERTA"

@@ -107,11 +107,11 @@ const FeaturedProducts = () => {
                 <Link to={getProductUrl(product.id)} className="block">
                   <div className="relative">
                     <img
-                      src={product.image || 'https://via.placeholder.com/300x200/0033CC/FFFFFF?text=PRODUCTO'}
+                      src={product.image || '/placeholder-product.svg'}
                       alt={product.name}
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                       onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/300x200/0033CC/FFFFFF?text=PRODUCTO'
+                        e.target.src = '/placeholder-product.svg'
                       }}
                     />
                   <div className="absolute top-4 left-4">

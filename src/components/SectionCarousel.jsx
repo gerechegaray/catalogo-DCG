@@ -23,14 +23,10 @@ const SectionCarousel = () => {
           section = 'petshops'
         }
         
-        console.log('🎠 SectionCarousel: Cargando comunicados para sección:', section)
-        
         if (section) {
           const comms = await getActiveCommunications(section)
-          console.log('🎠 SectionCarousel: Comunicados recibidos:', comms.length)
           setSlides(comms)
         } else {
-          console.log('🎠 SectionCarousel: No hay sección definida')
           setSlides([])
         }
       } catch (error) {
@@ -67,15 +63,8 @@ const SectionCarousel = () => {
   }
 
   if (slides.length === 0) {
-    console.log('🎠 SectionCarousel: No hay slides, no renderizando carousel')
     return null
   }
-
-  console.log('🎠 SectionCarousel: Renderizando carousel con', slides.length, 'slides')
-  console.log('🎠 SectionCarousel: Slides data:', slides.map(s => ({ title: s.title, section: s.section })))
-  console.log('🎠 SectionCarousel: Iniciando renderizado del carousel') // Debug log
-  console.log('🎠 SectionCarousel: Slide actual:', slides[currentSlide]) // Debug log
-  console.log('🎠 SectionCarousel: Imagen del slide actual:', slides[currentSlide]?.image) // Debug log
 
   const getBadgeColor = (badge) => {
     switch (badge) {
@@ -101,14 +90,12 @@ const SectionCarousel = () => {
             {/* Imagen de fondo */}
             <div className="absolute inset-0">
               <img
-                src={slide.image || 'https://i.imgur.com/placeholder.jpg'}
+                src={slide.image || '/placeholder-product.svg'}
                 alt={slide.title}
                 className="w-full h-full object-cover"
-                onLoad={() => console.log('✅ Imagen cargada:', slide.image)}
+                onLoad={() => {}}
                 onError={(e) => {
-                  console.log('❌ Error cargando imagen:', slide.image)
-                  // Cambiar a imagen de fallback
-                  e.target.src = 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=1200&h=500&fit=crop'
+                  e.target.src = '/placeholder-product.svg'
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-r from-blue-900/90 via-blue-800/80 to-blue-700/70"></div>

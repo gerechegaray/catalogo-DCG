@@ -12,8 +12,8 @@ export const getBrandsConfig = (userType) => {
 
     // En un entorno de desarrollo, no podemos escribir archivos directamente
     // Pero podemos mostrar el contenido y permitir copiarlo
-    console.log('📄 Contenido del archivo generado:')
-    console.log(fileContent)
+    // console.log('📄 Contenido del archivo generado:')
+    // console.log(fileContent)
     
     // Crear un blob y descargar automáticamente
     const blob = new Blob([fileContent], { type: 'text/javascript' })

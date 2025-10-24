@@ -258,7 +258,7 @@ class CascadingFiltersService {
       }
     })
     
-    console.log(`🔢 Conteo para ruta ${path.join(' → ')}: ${filteredProducts.length} productos`)
+    // console.log(`🔢 Conteo para ruta ${path.join(' → ')}: ${filteredProducts.length} productos`)
     return filteredProducts.length
   }
 

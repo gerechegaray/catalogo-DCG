@@ -128,14 +128,14 @@ export const populateInitialBrands = async () => {
   ]
 
   try {
-    console.log('🚀 Poblando marcas iniciales...')
+    // console.log('🚀 Poblando marcas iniciales...')
     
     for (const brand of initialBrands) {
       await saveBrand(brand)
-      console.log(`✅ Marca agregada: ${brand.name}`)
+      // console.log(`✅ Marca agregada: ${brand.name}`)
     }
     
-    console.log('🎉 Todas las marcas iniciales han sido agregadas')
+    // console.log('🎉 Todas las marcas iniciales han sido agregadas')
     return true
   } catch (error) {
     console.error('❌ Error al poblar marcas iniciales:', error)
