@@ -1,6 +1,7 @@
 import React from 'react'
 import { useProducts } from '../context/ProductContext'
 import categoryMappingService from '../services/categoryMappingService'
+import ExportButton from './ExportButton'
 
 const FilterSidebar = () => {
   const { 
@@ -55,15 +56,21 @@ const FilterSidebar = () => {
       <div className="mb-6">
         <h2 className="text-xl font-bold mb-4">Filtros</h2>
         
-        {/* Botón limpiar filtros */}
-        {(filters.category || filters.subcategory) && (
-          <button
-            onClick={clearFilters}
-            className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors mb-4"
-          >
-            Limpiar Filtros
-          </button>
-        )}
+        {/* Botones de acción */}
+        <div className="space-y-3 mb-6">
+          {/* Botón limpiar filtros */}
+          {(filters.category || filters.subcategory) && (
+            <button
+              onClick={clearFilters}
+              className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            >
+              Limpiar Filtros
+            </button>
+          )}
+          
+          {/* Botón exportar PDF */}
+          <ExportButton variant="sidebar" />
+        </div>
       </div>
 
       {/* Categorías Navbar */}

@@ -147,6 +147,13 @@ export interface ProductContextType extends ProductState {
   reloadProducts: () => void
   loadAnalytics: () => Promise<void>
   recordProductView: (productId: string) => void
+  recordPageView: (pageName: string) => void
+  recordNavbarClick: (linkName: string) => void
+  recordAdClick: (adId: string, adTitle: string) => void
+  recordFeaturedProductClick: (productId: string, productName: string) => void
+  recordViewProductClick: (productId: string, productName: string) => void
+  recordAddToCart: (productId: string, productName: string, quantity?: number) => void
+  recordWhatsAppOrder: (productIds: string[], productNames: string[]) => void
 }
 
 export interface ProductProviderProps {

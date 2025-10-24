@@ -1,5 +1,6 @@
 // Servicio para generar mensajes de WhatsApp
 import type { WhatsAppProduct, ClientInfo, WhatsAppMessage } from '@/types/whatsapp'
+import cacheService from './cacheService'
 
 class WhatsAppService {
   private baseMessage: string
@@ -83,8 +84,11 @@ class WhatsAppService {
   }
 
   // Abrir WhatsApp con el mensaje generado
-  openWhatsApp(message: string, phoneNumber: string | null = null): void {
+  openWhatsApp(message: string, phoneNumber: string | null = null, productIds: string[] = [], productNames: string[] = []): void {
     try {
+      // Registrar en analytics
+      cacheService.recordWhatsAppOrder(productIds, productNames)
+      
       // Codificar el mensaje para URL
       const encodedMessage = encodeURIComponent(message)
       
@@ -120,14 +124,12 @@ class WhatsAppService {
       // Generar mensaje
       const messageData = this.generateMessage(selectedProducts, clientInfo)
       
-      // Abrir WhatsApp
-      this.openWhatsApp(messageData.message, phoneNumber)
+      // Extraer IDs y nombres de productos para analytics
+      const productIds = selectedProducts.map(p => p.id)
+      const productNames = selectedProducts.map(p => p.name)
       
-      // Registrar analytics
-      if (window.cacheService) {
-        const productIds = selectedProducts.map(p => p.id)
-        await window.cacheService.recordWhatsAppClick(productIds, clientInfo.userType || 'unknown')
-      }
+      // Abrir WhatsApp con tracking
+      this.openWhatsApp(messageData.message, phoneNumber, productIds, productNames)
       
       return messageData
       

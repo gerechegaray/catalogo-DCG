@@ -379,16 +379,44 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
   
   const loadAnalytics = useCallback(async (): Promise<void> => {
     try {
-      const analyticsData = await cacheService.getAnalytics()
+      const analyticsData = await cacheService.getAnalytics(state.products)
       dispatch({ type: actionTypes.SET_ANALYTICS, payload: analyticsData })
     } catch (error) {
       console.error('Error al cargar analytics:', error)
       // Mantener analytics por defecto en caso de error
     }
-  }, [])
+  }, [state.products])
   
   const recordProductView = useCallback((productId: string): void => {
     cacheService.recordProductView(productId, state.filters.userType)
+  }, [state.filters.userType])
+
+  const recordPageView = useCallback((pageName: string): void => {
+    cacheService.recordPageView(pageName, state.filters.userType)
+  }, [state.filters.userType])
+
+  const recordNavbarClick = useCallback((linkName: string): void => {
+    cacheService.recordNavbarClick(linkName, state.filters.userType)
+  }, [state.filters.userType])
+
+  const recordAdClick = useCallback((adId: string, adTitle: string): void => {
+    cacheService.recordAdClick(adId, adTitle, state.filters.userType)
+  }, [state.filters.userType])
+
+  const recordFeaturedProductClick = useCallback((productId: string, productName: string): void => {
+    cacheService.recordFeaturedProductClick(productId, productName, state.filters.userType)
+  }, [state.filters.userType])
+
+  const recordViewProductClick = useCallback((productId: string, productName: string): void => {
+    cacheService.recordViewProductClick(productId, productName, state.filters.userType)
+  }, [state.filters.userType])
+
+  const recordAddToCart = useCallback((productId: string, productName: string, quantity: number = 1): void => {
+    cacheService.recordAddToCart(productId, productName, quantity, state.filters.userType)
+  }, [state.filters.userType])
+
+  const recordWhatsAppOrder = useCallback((productIds: string[], productNames: string[]): void => {
+    cacheService.recordWhatsAppOrder(productIds, productNames, state.filters.userType)
   }, [state.filters.userType])
 
   const actions = {
@@ -404,7 +432,14 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
     clearSelectedProducts,
     reloadProducts,
     loadAnalytics,
-    recordProductView
+    recordProductView,
+    recordPageView,
+    recordNavbarClick,
+    recordAdClick,
+    recordFeaturedProductClick,
+    recordViewProductClick,
+    recordAddToCart,
+    recordWhatsAppOrder
   }
 
   const value: ProductContextType = {

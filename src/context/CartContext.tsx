@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer } from 'react'
 import type { CartContextType, CartProviderProps, CartState, CartAction, CartItem, NormalizedProduct } from '@/types/contexts'
+import { useProducts } from './ProductContext'
 
 // Tipos de acciones del carrito
 const actionTypes = {
@@ -106,6 +107,7 @@ export const useCart = (): CartContextType => {
 // Provider del contexto
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const [cartState, dispatch] = useReducer(cartReducer, initialState)
+  const { recordAddToCart } = useProducts()
 
   // Acciones del carrito
   const addToCart = (product: NormalizedProduct): void => {
@@ -113,6 +115,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       type: actionTypes.ADD_TO_CART,
       payload: product
     })
+    // Registrar en analytics
+    recordAddToCart(product.id, product.name, 1)
   }
 
   const removeFromCart = (productId: string): void => {

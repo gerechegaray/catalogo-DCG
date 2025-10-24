@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useProducts } from '../context/ProductContext'
-import { ShoppingCart, Plus } from 'lucide-react'
+import { Eye } from 'lucide-react'
 
 const ProductCard = ({ product }) => {
   const location = useLocation()
-  const { addSelectedProduct, selectedProducts, recordProductView } = useProducts()
-  const [isSelected, setIsSelected] = useState(false)
+  const navigate = useNavigate()
+  const { recordProductView, recordViewProductClick } = useProducts()
   const [showImageModal, setShowImageModal] = useState(false)
 
   // Determinar la URL base para el enlace del producto
@@ -18,16 +18,27 @@ const ProductCard = ({ product }) => {
     }
   }
 
-  // Verificar si el producto está seleccionado
-  React.useEffect(() => {
-    const selected = selectedProducts.find(p => p.id === product.id)
-    setIsSelected(!!selected)
-  }, [selectedProducts, product.id])
-
-  // Manejar selección de producto
-  const handleSelect = () => {
-    addSelectedProduct(product)
+  // Manejar vista de producto (cuando se hace clic en imagen o nombre)
+  const handleProductView = () => {
     recordProductView(product.id)
+  }
+
+  // Manejar click en "Ver Producto"
+  const handleViewProduct = () => {
+    console.log('🔍 Debug handleViewProduct:', {
+      productId: product.id,
+      productName: product.name,
+      product: product
+    })
+    
+    if (!product.id) {
+      console.error('❌ Error: product.id es undefined', product)
+      return
+    }
+    
+    recordViewProductClick(product.id, product.name || `Producto ${product.id}`)
+    const productUrl = getProductUrl()
+    navigate(productUrl)
   }
 
   // Formatear precio
@@ -48,7 +59,7 @@ const ProductCard = ({ product }) => {
   return (
     <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
       {/* Imagen del producto - Enlace a detalle */}
-      <Link to={getProductUrl()}>
+      <Link to={getProductUrl()} onClick={handleProductView}>
         <div className="w-full h-48 bg-gray-100 rounded-lg mb-4 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative group">
         {product.image ? (
           <>
@@ -81,9 +92,11 @@ const ProductCard = ({ product }) => {
       {/* Información del producto */}
       <div className="space-y-3">
         {/* Nombre */}
-        <h3 className="font-semibold text-gray-900 line-clamp-2 text-sm">
-          {product.name}
-        </h3>
+        <Link to={getProductUrl()} onClick={handleProductView}>
+          <h3 className="font-semibold text-gray-900 line-clamp-2 text-sm hover:text-blue-600 transition-colors cursor-pointer">
+            {product.name}
+          </h3>
+        </Link>
 
         {/* Precio */}
         <div className="text-lg font-bold text-blue-600">
@@ -100,19 +113,18 @@ const ProductCard = ({ product }) => {
           </span>
         </div>
 
-        {/* Botón de selección */}
+        {/* Botón de ver producto */}
         <button
-          onClick={handleSelect}
+          onClick={handleViewProduct}
           disabled={product.stock <= 0}
-          className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
-            isSelected
-              ? 'bg-green-100 text-green-700 border border-green-300'
-              : product.stock > 0
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+          className={`w-full py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 ${
+            product.stock > 0
+              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
           }`}
         >
-          {isSelected ? '✓ Seleccionado' : product.stock > 0 ? 'Seleccionar' : 'Sin Stock'}
+          <Eye className="w-4 h-4" />
+          <span>{product.stock > 0 ? 'Ver Producto' : 'Sin Stock'}</span>
         </button>
       </div>
 

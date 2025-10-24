@@ -8,6 +8,7 @@ import CartHeader from './components/CartHeader'
 import Footer from './components/Footer'
 import ProtectedRoute from './components/ProtectedRoute'
 import ProductSelectionBar from './components/ProductSelectionBar'
+import PageTracker from './components/PageTracker'
 
 // Lazy loading de páginas
 const HomePage = React.lazy(() => import('./pages/HomePage'))
@@ -38,22 +39,26 @@ function App() {
             <Routes>
               {/* Página pública */}
               <Route path="/" element={
-                <Suspense fallback={<LoadingSpinner />}>
-                  <HomePage />
-                </Suspense>
+                <PageTracker>
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <HomePage />
+                  </Suspense>
+                </PageTracker>
               } />
               
               {/* Páginas de presentación */}
               <Route path="/veterinarios" element={
                 <ProtectedRoute requireAuth={true}>
                   <CartProvider>
-                    <div>
-                      <CartHeader />
-                      <Suspense fallback={<LoadingSpinner />}>
-                        <VeterinariosLandingPage />
-                      </Suspense>
-                      <Footer />
-                    </div>
+                    <PageTracker>
+                      <div>
+                        <CartHeader />
+                        <Suspense fallback={<LoadingSpinner />}>
+                          <VeterinariosLandingPage />
+                        </Suspense>
+                        <Footer />
+                      </div>
+                    </PageTracker>
                   </CartProvider>
                 </ProtectedRoute>
               } />
@@ -61,13 +66,15 @@ function App() {
               <Route path="/petshops" element={
                 <ProtectedRoute requireAuth={true}>
                   <CartProvider>
-                    <div>
-                      <CartHeader />
-                      <Suspense fallback={<LoadingSpinner />}>
-                        <PetShopsLandingPage />
-                      </Suspense>
-                      <Footer />
-                    </div>
+                    <PageTracker>
+                      <div>
+                        <CartHeader />
+                        <Suspense fallback={<LoadingSpinner />}>
+                          <PetShopsLandingPage />
+                        </Suspense>
+                        <Footer />
+                      </div>
+                    </PageTracker>
                   </CartProvider>
                 </ProtectedRoute>
               } />
@@ -76,20 +83,23 @@ function App() {
               <Route path="/veterinarios/productos" element={
                 <ProtectedRoute requireAuth={true}>
                   <CartProvider>
-                    <div>
-                      <CartHeader />
-                      <Suspense fallback={<LoadingSpinner />}>
-                        <VeterinariosProductosPage />
-                      </Suspense>
-                      <Footer />
-                    </div>
+                    <PageTracker>
+                      <div>
+                        <CartHeader />
+                        <Suspense fallback={<LoadingSpinner />}>
+                          <VeterinariosProductosPage />
+                        </Suspense>
+                        <Footer />
+                      </div>
+                    </PageTracker>
                   </CartProvider>
                 </ProtectedRoute>
               } />
-              
-              <Route path="/petshops/productos" element={
-                <ProtectedRoute requireAuth={true}>
-                  <CartProvider>
+            
+            <Route path="/petshops/productos" element={
+              <ProtectedRoute requireAuth={true}>
+                <CartProvider>
+                  <PageTracker>
                     <div>
                       <CartHeader />
                       <Suspense fallback={<LoadingSpinner />}>
@@ -97,14 +107,16 @@ function App() {
                       </Suspense>
                       <Footer />
                     </div>
-                  </CartProvider>
-                </ProtectedRoute>
-              } />
-              
-              {/* Páginas de detalle de producto */}
-              <Route path="/veterinarios/productos/:productId" element={
-                <ProtectedRoute requireAuth={true}>
-                  <CartProvider>
+                  </PageTracker>
+                </CartProvider>
+              </ProtectedRoute>
+            } />
+            
+            {/* Páginas de detalle de producto */}
+            <Route path="/veterinarios/productos/:productId" element={
+              <ProtectedRoute requireAuth={true}>
+                <CartProvider>
+                  <PageTracker>
                     <div>
                       <CartHeader />
                       <Suspense fallback={<LoadingSpinner />}>
@@ -112,13 +124,15 @@ function App() {
                       </Suspense>
                       <Footer />
                     </div>
-                  </CartProvider>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/petshops/productos/:productId" element={
-                <ProtectedRoute requireAuth={true}>
-                  <CartProvider>
+                  </PageTracker>
+                </CartProvider>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/petshops/productos/:productId" element={
+              <ProtectedRoute requireAuth={true}>
+                <CartProvider>
+                  <PageTracker>
                     <div>
                       <CartHeader />
                       <Suspense fallback={<LoadingSpinner />}>
@@ -126,12 +140,14 @@ function App() {
                       </Suspense>
                       <Footer />
                     </div>
-                  </CartProvider>
-                </ProtectedRoute>
-              } />
-              
-              {/* Contacto */}
-              <Route path="/contacto" element={
+                  </PageTracker>
+                </CartProvider>
+              </ProtectedRoute>
+            } />
+            
+            {/* Contacto */}
+            <Route path="/contacto" element={
+              <PageTracker>
                 <div>
                   <Header />
                   <Suspense fallback={<LoadingSpinner />}>
@@ -139,12 +155,14 @@ function App() {
                   </Suspense>
                   <Footer />
                 </div>
-              } />
-              
-              {/* Admin */}
-              <Route path="/admin" element={
-                <ProtectedRoute requireAdmin={true}>
-                  <CartProvider>
+              </PageTracker>
+            } />
+            
+            {/* Admin */}
+            <Route path="/admin" element={
+              <ProtectedRoute requireAdmin={true}>
+                <CartProvider>
+                  <PageTracker>
                     <div>
                       <CartHeader />
                       <Suspense fallback={<LoadingSpinner />}>
@@ -152,17 +170,18 @@ function App() {
                       </Suspense>
                       <Footer />
                     </div>
-                  </CartProvider>
-                </ProtectedRoute>
-              } />
-              
-              {/* Redirección para rutas no encontradas */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+                  </PageTracker>
+                </CartProvider>
+              </ProtectedRoute>
+            } />
             
-            {/* Barra de productos seleccionados */}
-            {/* <ProductSelectionBar /> */}
-          </div>
+            {/* Redirección para rutas no encontradas */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+          
+          {/* Barra de productos seleccionados */}
+          {/* <ProductSelectionBar /> */}
+        </div>
         </ProductProvider>
       </AuthProvider>
     </Router>

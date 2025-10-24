@@ -94,23 +94,58 @@ const VeterinariosProductosPage = () => {
   )
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Debug de productos - Oculto para no interferir con el layout */}
-      {/* {process.env.NODE_ENV === 'development' && <ProductDebug />} */}
+    <div className="min-h-screen bg-gray-50">
+      <div className="flex flex-col lg:flex-row">
+        {/* Debug de productos - Oculto para no interferir con el layout */}
+        {/* {process.env.NODE_ENV === 'development' && <ProductDebug />} */}
 
-      {/* Sidebar de filtros escalonados */}
-      <CascadingFilters 
-        section="veterinarios" 
-        selectedPath={selectedPath}
-        onPathChange={setSelectedPath}
-        products={getDisplayProducts()}
-      />
+        {/* Sidebar de filtros escalonados */}
+        <CascadingFilters 
+          section="veterinarios" 
+          selectedPath={selectedPath}
+          onPathChange={setSelectedPath}
+          products={getDisplayProducts()}
+        />
 
-      {/* Contenido principal */}
-      <div className="flex-1 flex flex-col">
+        {/* Contenido principal */}
+        <div className="w-full lg:flex-1 lg:flex lg:flex-col min-w-0">
         {/* Barra superior con búsqueda */}
-        <div className="bg-white border-b p-4">
-          <div className="flex items-center gap-4">
+        <div className="bg-white border-b p-2 sm:p-4">
+          {/* Layout móvil: búsqueda en fila separada */}
+          <div className="lg:hidden space-y-3">
+            {/* Filtros móvil */}
+            <div className="flex items-center gap-2">
+              <MobileCascadingFilters 
+                section="veterinarios" 
+                selectedPath={selectedPath}
+                onPathChange={setSelectedPath}
+                products={getDisplayProducts()}
+              />
+              
+              {/* Botón para limpiar cache */}
+              <button
+                onClick={handleClearCache}
+                disabled={clearingCache}
+                className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm whitespace-nowrap ml-auto"
+              >
+                {clearingCache ? '🔄 Limpiando...' : '🗑️ Limpiar Cache'}
+              </button>
+            </div>
+            
+            {/* Búsqueda móvil */}
+            <div className="w-full">
+              <input
+                type="text"
+                placeholder="Buscar productos..."
+                value={searchTerm}
+                onChange={handleSearch}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+              />
+            </div>
+          </div>
+
+          {/* Layout desktop: todo en una fila */}
+          <div className="hidden lg:flex items-center gap-4">
             {/* Filtros móvil */}
             <MobileCascadingFilters 
               section="veterinarios" 
@@ -120,7 +155,7 @@ const VeterinariosProductosPage = () => {
             />
             
             {/* Búsqueda */}
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <input
                 type="text"
                 placeholder="Buscar productos..."
@@ -142,7 +177,7 @@ const VeterinariosProductosPage = () => {
         </div>
 
         {/* Contenido */}
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-2 sm:p-4 lg:p-6 min-w-0">
           {/* Estado de carga */}
           {loading && (
             <div className="text-center py-16">
@@ -218,6 +253,7 @@ const VeterinariosProductosPage = () => {
           )}
         </div>
       </div>
+    </div>
     </div>
   )
 }

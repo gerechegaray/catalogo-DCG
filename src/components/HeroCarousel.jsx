@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
+import { useProducts } from '../context/ProductContext'
 
 const HeroCarousel = () => {
   const [currentSlide, setCurrentSlide] = useState(0)
+  const { recordAdClick } = useProducts()
 
   const slides = [
     {
@@ -102,6 +104,7 @@ const HeroCarousel = () => {
                       className="inline-block bg-gradient-to-r from-white to-blue-100 text-blue-800 px-10 py-4 rounded-2xl font-bold text-lg hover:from-blue-100 hover:to-white transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105"
                       onClick={(e) => {
                         e.preventDefault()
+                        recordAdClick(slide.id.toString(), slide.title)
                         window.location.href = slide.buttonLink
                       }}
                     >

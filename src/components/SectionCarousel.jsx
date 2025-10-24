@@ -103,7 +103,7 @@ const SectionCarousel = () => {
             
             {/* Contenido */}
             <div className="relative h-full flex items-center">
-              <div className="container mx-auto px-4">
+              <div className="w-full px-2 sm:px-4 lg:container lg:mx-auto">
                 <div className="max-w-3xl">
                   <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 border border-white/20 shadow-2xl">
                     <div className="flex items-center mb-4">

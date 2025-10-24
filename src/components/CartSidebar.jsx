@@ -2,6 +2,7 @@ import React from 'react'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { X, Plus, Minus, Trash2, ShoppingCart } from 'lucide-react'
+import whatsappService from '../services/whatsappService'
 
 const CartSidebar = ({ isOpen, onClose }) => {
   const { items, totalItems, totalPrice, updateQuantity, removeFromCart, clearCart } = useCart()
@@ -27,19 +28,34 @@ const CartSidebar = ({ isOpen, onClose }) => {
   }
 
   // Enviar pedido por WhatsApp
-  const handleSendWhatsApp = () => {
+  const handleSendWhatsApp = async () => {
     if (items.length === 0) {
       alert('El pedido está vacío. Agrega productos antes de enviar.')
       return
     }
 
-    const message = generateWhatsAppMessage()
-    const whatsappUrl = `https://wa.me/5492645438284?text=${message}`
-    window.open(whatsappUrl, '_blank')
-    
-    // Limpiar pedido después de enviar
-    clearCart()
-    onClose()
+    try {
+      // Convertir items del carrito al formato esperado por whatsappService
+      const whatsappProducts = items.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        supplier: 'DCG Distribuciones' // Puedes ajustar esto según tus datos
+      }))
+
+      // Usar el servicio de WhatsApp con tracking
+      await whatsappService.sendMessage(whatsappProducts, {
+        userType: userType || 'unknown'
+      })
+      
+      // Limpiar pedido después de enviar
+      clearCart()
+      onClose()
+    } catch (error) {
+      console.error('Error enviando pedido por WhatsApp:', error)
+      alert('Error al enviar el pedido por WhatsApp')
+    }
   }
 
   // Formatear precio
