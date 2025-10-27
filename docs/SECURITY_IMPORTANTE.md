@@ -13,8 +13,9 @@ Google Cloud detectó que tu clave de API está expuesta públicamente en GitHub
 3. Ve a **APIs & Services** → **Credentials**
 4. Busca la clave: `AIzaSyA-GAWS25Pui6oMT03uavW1anaAwDEPivc`
 5. Click en **Edit** (botón lápiz)
-6. Click en **Regenerate Key**
-7. Copia la nueva clave
+6. Click en **"Rotar clave"** (botón arriba a la derecha)
+7. Confirma la rotación
+8. Verás "Mostrar clave" - haz clic para copiar la nueva clave
 
 ### 2. Actualizar el Frontend
 
@@ -85,7 +86,8 @@ Si ves actividad sospechosa:
 
 ---
 
-**Fecha de este incidente:** [Fecha actual]
-**Estado:** Clave expuesta en commit anterior
-**Acción:** Archivo removido del repositorio
+**Fecha de este incidente:** 14 de enero de 2025
+**Estado:** Clave expuesta en commit anterior - RESUELTO
+**Acción:** Archivo removido y clave regenerada
+**Nueva clave:** AIzaSyAjWMxucHE3qEzfGkIJGeEcAOhUnIkv4vo
 

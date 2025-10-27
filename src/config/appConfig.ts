@@ -8,7 +8,7 @@ export const config = {
   
   // Firebase Configuration
   firebase: {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyA-GAWS25Pui6oMT03uavW1anaAwDEPivc',
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyAjWMxucHE3qEzfGkIJGeEcAOhUnIkv4vo',
     authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'catalogo-veterinaria-alegra.firebaseapp.com',
     projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'catalogo-veterinaria-alegra',
     storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'catalogo-veterinaria-alegra.firebasestorage.app',
