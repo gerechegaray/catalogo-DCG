@@ -11,8 +11,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "analyze": "vite build --mode analyze",
-    "upload:test": "node scripts/upload-test-catalog.js"
+    "analyze": "vite build --mode analyze"
   },
   "dependencies": {
     "firebase": "^12.3.0",
