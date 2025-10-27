@@ -12,6 +12,7 @@ import {
   writeBatch
 } from 'firebase/firestore'
 import { db } from '../config/firebase'
+import storageService from './storageService'
 
 // Servicio para manejar cache y analytics en Firebase
 class CacheService {
@@ -843,7 +844,7 @@ class CacheService {
 
   // Limpiar datos corruptos de analytics
   async cleanCorruptedAnalytics() {
-      
+    try {
       // Obtener todos los documentos de analytics
       const analyticsRef = collection(db, this.analyticsCollection)
       const snapshot = await getDocs(analyticsRef)
@@ -879,6 +880,109 @@ class CacheService {
       throw error
     }
   }
+
+  // ============================================
+  // NUEVOS MÉTODOS: USANDO FIREBASE STORAGE
+  // ============================================
+  
+  /**
+   * Obtener productos desde Firebase Storage
+   * Este es el nuevo método que reemplaza la lectura desde Firestore
+   * @param {string} userType - 'vet' o 'pet'
+   * @returns {Promise<Array>} - Array de productos
+   */
+  async getProductsFromStorage(userType = 'vet') {
+    try {
+      console.log(`📥 Obteniendo productos desde Storage para ${userType}...`)
+      const products = await storageService.downloadCatalog(userType)
+      console.log(`✅ ${products.length} productos obtenidos desde Storage`)
+      return products
+    } catch (error) {
+      console.error('❌ Error obteniendo productos desde Storage:', error)
+      // Fallback: intentar obtener desde Firestore
+      console.log('🔄 Intentando fallback con Firestore...')
+      return this.getProductsFromCache()
+    }
+  }
+
+  /**
+   * Verificar si los archivos del catálogo existen en Storage
+   * @param {string} userType - 'vet' o 'pet'
+   * @returns {Promise<boolean>}
+   */
+  async isStorageCatalogAvailable(userType = 'vet') {
+    try {
+      return await storageService.checkCatalogExists(userType)
+    } catch (error) {
+      console.error('❌ Error verificando catálogo en Storage:', error)
+      return false
+    }
+  }
+
+  /**
+   * Método híbrido: intenta Storage primero, luego Firestore
+   * @param {string} userType - 'vet' o 'pet'
+   * @returns {Promise<Array>} - Array de productos
+   */
+  async getProductsHybrid(userType = 'vet') {
+    try {
+      // Intentar obtener desde Storage primero
+      const storageAvailable = await this.isStorageCatalogAvailable(userType)
+      
+      if (storageAvailable) {
+        console.log('✅ Usando Storage como fuente principal')
+        return await this.getProductsFromStorage(userType)
+      } else {
+        console.log('⚠️ Storage no disponible, usando Firestore')
+        return await this.getProductsFromCache()
+      }
+    } catch (error) {
+      console.error('❌ Error en método híbrido:', error)
+      // Último fallback: leer desde Firestore
+      return this.getProductsFromCache()
+    }
+  }
+
+  /**
+   * Verificar si el cache está actualizado
+   * Nueva versión que verifica tanto Storage como Firestore
+   * @returns {Promise<boolean>}
+   */
+  async isCacheUpToDateHybrid(userType = 'vet') {
+    try {
+      // Verificar primero si existe catálogo en Storage
+      const storageExists = await this.isStorageCatalogAvailable(userType)
+      
+      if (storageExists) {
+        // Si existe en Storage, considerar que está actualizado
+        // (la actualización diaria se hace desde la Cloud Function)
+        return true
+      }
+      
+      // Si no existe en Storage, verificar el cache viejo de Firestore
+      return await this.isCacheUpToDate()
+    } catch (error) {
+      console.error('❌ Error verificando cache híbrido:', error)
+      return false
+    }
+  }
+
+  /**
+   * Forzar recarga del catálogo desde Storage
+   * Útil para actualizaciones manuales en el admin
+   * @param {string} userType - 'vet' o 'pet'
+   * @returns {Promise<Array>} - Array de productos
+   */
+  async refreshCatalogFromStorage(userType = 'vet') {
+    try {
+      console.log(`🔄 Forzando recarga del catálogo ${userType}...`)
+      return await storageService.refreshCatalog(userType)
+    } catch (error) {
+      console.error('❌ Error recargando catálogo desde Storage:', error)
+      throw error
+    }
+  }
+}
 
 // Exportar instancia única del servicio
 export default new CacheService()

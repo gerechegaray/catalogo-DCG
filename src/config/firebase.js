@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
 import { getAnalytics } from 'firebase/analytics'
+import { getStorage } from 'firebase/storage'
 import { config } from './appConfig'
 
 // Usar configuración centralizada
@@ -16,5 +17,8 @@ export const db = getFirestore(app)
 
 // Inicializar Analytics (opcional)
 export const analytics = getAnalytics(app)
+
+// Inicializar Storage
+export const storage = getStorage(app)
 
 export default app

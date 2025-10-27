@@ -263,23 +263,22 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
     try {
       dispatch({ type: actionTypes.SET_LOADING, payload: true })
       
-      // Verificar cache primero
-      const isCacheValid = await cacheService.isCacheUpToDate()
+      // NUEVO: Usar el método híbrido que intenta Storage primero
+      // Este método intenta descargar desde Firebase Storage (más eficiente)
+      // y si falla, usa Firestore como fallback (para retrocompatibilidad)
+      const products = await cacheService.getProductsHybrid(userType)
       
-      if (isCacheValid) {
-        // console.log('📖 Cargando productos desde cache...')
-        const cachedProducts = await cacheService.getProductsFromCache()
-        // Los productos del cache ya están procesados, no necesitan normalización adicional
-        dispatch({ type: actionTypes.SET_PRODUCTS, payload: cachedProducts })
+      if (products && products.length > 0) {
+        // Productos obtenidos exitosamente desde Storage o Firestore
+        dispatch({ type: actionTypes.SET_PRODUCTS, payload: products })
         dispatch({ type: actionTypes.SET_CACHE_STATUS, payload: 'valid' })
       } else {
-        // console.log('🔄 Cache expirado, sincronizando con Alegra...')
+        // Si no hay productos en cache, obtener desde Alegra API
+        console.log('🔄 No hay cache disponible, sincronizando con Alegra...')
         const alegraProducts = await alegraService.getAllProducts()
         
-        // Los productos ya vienen procesados desde alegraService.getAllProducts()
-        // No necesitan normalización adicional
-        
-        // Guardar en cache
+        // Guardar en cache de Firestore (compatibilidad temporal)
+        // NOTA: Ya no guardaremos en Firestore en producción cuando la Cloud Function esté activa
         await cacheService.saveProductsToCache(alegraProducts)
         
         dispatch({ type: actionTypes.SET_PRODUCTS, payload: alegraProducts })
