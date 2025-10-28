@@ -14,7 +14,9 @@
     "analyze": "vite build --mode analyze"
   },
   "dependencies": {
+    "axios": "^1.13.1",
     "firebase": "^12.3.0",
+    "firebase-admin": "^13.5.0",
     "jspdf": "^3.0.3",
     "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.544.0",

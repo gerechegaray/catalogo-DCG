@@ -1,4 +1,4 @@
-const functions = require('firebase-functions');
+const {onRequest} = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
 const axios = require('axios');
 
@@ -10,18 +10,18 @@ admin.initializeApp();
  * 
  * Esta función se ejecuta automáticamente cada día via Cloud Scheduler
  */
-exports.updateCatalog = functions.https.onRequest(async (req, res) => {
+exports.updateCatalog = onRequest(async (req, res) => {
   try {
     console.log('🔄 Iniciando actualización de catálogo...');
     
-    // Credenciales de Alegra (deben estar en variables de entorno)
-    const ALEGRA_API_KEY = functions.config().alegra?.api_key || 
-                           process.env.ALEGRA_API_KEY || 
-                           'gerechegaray@gmail.com:79e207afe8c4464a8d90';
+    // Credenciales de Alegra desde variables de entorno
+    const ALEGRA_API_KEY = process.env.ALEGRA_API_KEY;
+    const ALEGRA_BASE_URL = process.env.ALEGRA_BASE_URL || 'https://api.alegra.com/api/v1';
     
-    const ALEGRA_BASE_URL = functions.config().alegra?.base_url || 
-                            process.env.ALEGRA_BASE_URL || 
-                            'https://api.alegra.com/api/v1';
+    if (!ALEGRA_API_KEY) {
+      res.status(500).json({ error: 'ALEGRA_API_KEY no está configurada' });
+      return;
+    }
     
     // Headers para la petición a Alegra
     const headers = {
