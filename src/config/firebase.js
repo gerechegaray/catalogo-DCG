@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
 import { getAnalytics } from 'firebase/analytics'
 import { getStorage } from 'firebase/storage'
+import { getAuth } from 'firebase/auth'
 import { config } from './appConfig'
 
 // Usar configuración centralizada
@@ -20,5 +21,8 @@ export const analytics = getAnalytics(app)
 
 // Inicializar Storage
 export const storage = getStorage(app)
+
+// Inicializar Authentication
+export const auth = getAuth(app)
 
 export default app

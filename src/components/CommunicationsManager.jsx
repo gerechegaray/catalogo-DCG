@@ -6,6 +6,7 @@ import {
   deleteCommunication, 
   toggleCommunicationStatus 
 } from '../services/communicationsService'
+import clientManagementService from '../services/clientManagementService'
 
 const CommunicationsManager = () => {
   const [communications, setCommunications] = useState([])
@@ -17,20 +18,38 @@ const CommunicationsManager = () => {
     title: '',
     subtitle: '',
     type: 'producto-nuevo',
+    communicationType: 'anuncio', // 'anuncio', 'promocion', 'descuento-exclusivo'
     description: '',
     image: '',
     buttonText: 'Ver Más',
     buttonLink: '',
     badge: 'NUEVO',
     section: 'veterinarios',
+    targetClients: [],
+    discountPercent: '',
     validFrom: new Date().toISOString().split('T')[0],
     validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 30 días desde hoy
   })
+  
+  // Estados para el selector de clientes
+  const [allClients, setAllClients] = useState([])
+  const [clientSearch, setClientSearch] = useState('')
 
   // Cargar comunicados al montar el componente
   useEffect(() => {
     loadCommunications()
+    loadClients()
   }, [])
+  
+  // Función para cargar clientes activos
+  const loadClients = async () => {
+    try {
+      const clients = await clientManagementService.getActiveClients()
+      setAllClients(clients)
+    } catch (error) {
+      console.error('Error cargando clientes:', error)
+    }
+  }
 
   const loadCommunications = async () => {
     try {
@@ -46,8 +65,8 @@ const CommunicationsManager = () => {
   }
 
   const handleAddCommunication = async () => {
-    if (!newComm.title || !newComm.image) {
-      alert('❌ Por favor completa todos los campos obligatorios (Título e Imagen)')
+    if (!newComm.title) {
+      alert('❌ Por favor completa el título')
       return
     }
 
@@ -58,15 +77,19 @@ const CommunicationsManager = () => {
         title: '',
         subtitle: '',
         type: 'producto-nuevo',
+        communicationType: 'anuncio',
         description: '',
         image: '',
         buttonText: 'Ver Más',
         buttonLink: '',
         badge: 'NUEVO',
         section: 'veterinarios',
+        targetClients: [],
+        discountPercent: '',
         validFrom: new Date().toISOString().split('T')[0],
         validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
       })
+      setClientSearch('')
       setShowAddForm(false)
       alert('✅ Comunicado agregado exitosamente')
     } catch (error) {
@@ -200,6 +223,32 @@ const CommunicationsManager = () => {
     }
   }
 
+  // Funciones para manejar selección de clientes
+  const handleToggleClient = (clientId) => {
+    const currentTargets = newComm.targetClients || []
+    if (currentTargets.includes(clientId)) {
+      setNewComm({
+        ...newComm,
+        targetClients: currentTargets.filter(id => id !== clientId)
+      })
+    } else {
+      setNewComm({
+        ...newComm,
+        targetClients: [...currentTargets, clientId]
+      })
+    }
+  }
+
+  const getFilteredClients = () => {
+    if (!clientSearch) return allClients
+    const searchLower = clientSearch.toLowerCase()
+    return allClients.filter(client => 
+      client.displayName?.toLowerCase().includes(searchLower) ||
+      client.businessName?.toLowerCase().includes(searchLower) ||
+      client.email?.toLowerCase().includes(searchLower)
+    )
+  }
+
   const getBadgeColor = (badge) => {
     switch (badge) {
       case 'NUEVO': return 'bg-green-500'
@@ -263,125 +312,254 @@ const CommunicationsManager = () => {
         <div className="bg-white p-6 rounded-lg shadow-lg mb-6">
           <h3 className="text-xl font-semibold mb-4">Nuevo Comunicado</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Título *</label>
-              <input
-                type="text"
-                value={newComm.title}
-                onChange={(e) => setNewComm({...newComm, title: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Ej: NUEVO PRODUCTO ELMER"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Subtítulo</label>
-              <input
-                type="text"
-                value={newComm.subtitle}
-                onChange={(e) => setNewComm({...newComm, subtitle: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Ej: MEDICAMENTOS CONDUCTUALES"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
-              <select
-                value={newComm.type}
-                onChange={(e) => setNewComm({...newComm, type: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="producto-nuevo">🆕 Producto Nuevo</option>
-                <option value="aumento-precios">💰 Aumento de Precios</option>
-                <option value="promocion">🎉 Promoción</option>
-                <option value="aviso-importante">⚠️ Aviso Importante</option>
-                <option value="comunicado-general">📢 Comunicado General</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Badge</label>
-              <select
-                value={newComm.badge}
-                onChange={(e) => setNewComm({...newComm, badge: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="NUEVO">NUEVO</option>
-                <option value="IMPORTANTE">IMPORTANTE</option>
-                <option value="PROMO">PROMO</option>
-                <option value="OFERTA">OFERTA</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Sección</label>
-              <select
-                value={newComm.section}
-                onChange={(e) => setNewComm({...newComm, section: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="veterinarios">Veterinarios</option>
-                <option value="petshops">Pet Shops</option>
-                <option value="ambos">Ambas Secciones</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">URL de Imagen (Google Drive) *</label>
-              <input
-                type="url"
-                value={newComm.image}
-                onChange={(e) => setNewComm({...newComm, image: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="https://drive.google.com/uc?export=view&id=TU_ID"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Texto del Botón</label>
-              <input
-                type="text"
-                value={newComm.buttonText}
-                onChange={(e) => setNewComm({...newComm, buttonText: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Ver Productos"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Enlace del Botón</label>
-              <input
-                type="text"
-                value={newComm.buttonLink}
-                onChange={(e) => setNewComm({...newComm, buttonLink: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="/veterinarios/productos"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Válido Desde</label>
-              <input
-                type="date"
-                value={newComm.validFrom}
-                onChange={(e) => setNewComm({...newComm, validFrom: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Válido Hasta</label>
-              <input
-                type="date"
-                value={newComm.validUntil}
-                onChange={(e) => setNewComm({...newComm, validUntil: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+          {/* Paso 1: Seleccionar Tipo */}
+          <div className="mb-6 pb-6 border-b">
+            <label className="block text-sm font-medium text-gray-700 mb-3">🎯 Paso 1: Tipo de Comunicación</label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <label className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                newComm.communicationType === 'anuncio' ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+              }`}>
+                <input
+                  type="radio"
+                  name="communicationType"
+                  value="anuncio"
+                  checked={newComm.communicationType === 'anuncio'}
+                  onChange={(e) => setNewComm({...newComm, communicationType: e.target.value, targetClients: [], discountPercent: ''})}
+                  className="mr-3"
+                />
+                <div>
+                  <div className="font-semibold">Anuncio Público</div>
+                  <div className="text-xs text-gray-600">Páginas principales</div>
+                </div>
+              </label>
+              
+              <label className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                newComm.communicationType === 'promocion' ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+              }`}>
+                <input
+                  type="radio"
+                  name="communicationType"
+                  value="promocion"
+                  checked={newComm.communicationType === 'promocion'}
+                  onChange={(e) => setNewComm({...newComm, communicationType: e.target.value, targetClients: []})}
+                  className="mr-3"
+                />
+                <div>
+                  <div className="font-semibold">Promoción</div>
+                  <div className="text-xs text-gray-600">Portal clientes</div>
+                </div>
+              </label>
+              
+              <label className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                newComm.communicationType === 'descuento-exclusivo' ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+              }`}>
+                <input
+                  type="radio"
+                  name="communicationType"
+                  value="descuento-exclusivo"
+                  checked={newComm.communicationType === 'descuento-exclusivo'}
+                  onChange={(e) => setNewComm({...newComm, communicationType: e.target.value})}
+                  className="mr-3"
+                />
+                <div>
+                  <div className="font-semibold">Descuento Exclusivo</div>
+                  <div className="text-xs text-gray-600">Clientes específicos</div>
+                </div>
+              </label>
             </div>
           </div>
           
+          {/* Paso 2: Campos Comunes */}
+          <div className="mb-6 pb-6 border-b">
+            <h4 className="جيلات-lg font-semibold mb-4">📝 Información Básicaettes</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Título *</label>
+                <input
+                  type="text"
+                  value={newComm.title}
+                  onChange={(e) => setNewComm({...newComm, title: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Ej: NUEVO PRODUCTO ELMER"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Subtítulo</label>
+                <input
+                  type="text"
+                  value={newComm.subtitle}
+                  onChange={(e) => setNewComm({...newComm, subtitle: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Ej: MEDICAMENTOS CONDUCTUALES"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+                <select
+                  value={newComm.type}
+                  onChange={(e) => setNewComm({...newComm, type: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="producto-nuevo">🆕 Producto Nuevo</option>
+                  <option value="aumento-precios">💰 Aumento de Precios</option>
+                  <option value="promocion">🎉 Promoción</option>
+                  <option value="aviso-importante">⚠️ Aviso Importante</option>
+                  <option value="comunicado-general">📢 Comunicado General</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Badge</label>
+                <select
+                  value={newComm.badge}
+                  onChange={(e) => setNewComm({...newComm, badge: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="NUEVO">NUEVO</option>
+                  <option value="IMPORTANTE">IMPORTANTE</option>
+                  <option value="PROMO">PROMO</option>
+                  <option value="OFERTA">OFERTA</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Sección</label>
+                <select
+                  value={newComm.section}
+                  onChange={(e) => setNewComm({...newComm, section: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="veterinarios">Veterinarios</option>
+                  <option value="petshops">Pet Shops</option>
+                  <option value="ambos">Ambas Secciones</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          {/* Campos Específicos por Tipo */}
+          {(newComm.communicationType === 'promocion' || newComm.communicationType === 'descuento-exclusivo') && (
+            <div className="mb-6 pb-6 border-b">
+              <h4 className="text-lg font-semibold mb-4">
+                {newComm.communicationType === 'promocion' ? '🎉 Configuración de Promoción' : '🎁 Descuento Exclusivo'}
+              </h4>
+              
+              {/* Campo de Descuento */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">💰 Porcentaje de Descuento</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={newComm.discountPercent}
+                      onChange={(e) => setNewComm({...newComm, discountPercent: e.target.value})}
+                      className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="15"
+                    />
+                    <span className="text-gray-600">% OFF</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Selector de Clientes - Solo para exclusivo */}
+              {newComm.communicationType === 'descuento-exclusivo' && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">👥 Seleccionar Clientes</label>
+                  <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                    <input
+                      type="text"
+                      value={clientSearch}
+                      onChange={(e) => setClientSearch(e.target.value)}
+                      placeholder="🔍 Buscar..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-4"
+                    />
+                    <div className="max-h-48 overflow-y-auto space-y-2">
+                      {getFilteredClients().map((client) => (
+                        <label key={client.id} className={`flex items-center p-2 rounded-lg cursor-pointer border-2 transition-colors ${
+                          newComm.targetClients?.includes(client.id) ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                        }`}>
+                          <input
+                            type="checkbox"
+                            checked={newComm.targetClients?.includes(client.id) || false}
+                            onChange={() => handleToggleClient(client.id)}
+                            className="mr-3"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900">{client.businessName || client.displayName}</div>
+                            <div className="text-xs text-gray-600">{client.type === 'vet' ? 'Veterinario' : 'Pet Shop'}</div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                    <div className="mt-3 text-sm text-gray-600 font-medium">
+                      {newComm.targetClients?.length || 0} cliente(s) seleccionado(s)
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Campos Opcionales */}
+          <div className="mb-6 pb-6 border-b">
+            <h4 className="text-lg font-semibold mb-4">🎨 Imagen y Acciones</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">URL de Imagen</label>
+                <input
+                  type="url"
+                  value={newComm.image}
+                  onChange={(e) => setNewComm({...newComm, image: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="https://drive.google.com/uc?export=view&id=TU_ID"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Texto del Botón</label>
+                <input
+                  type="text"
+                  value={newComm.buttonText}
+                  onChange={(e) => setNewComm({...newComm, buttonText: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Ver Productos"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Enlace del Botón</label>
+                <input
+                  type="text"
+                  value={newComm.buttonLink}
+                  onChange={(e) => setNewComm({...newComm, buttonLink: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="/veterinarios/productos"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Válido Desde</label>
+                <input
+                  type="date"
+                  value={newComm.validFrom}
+                  onChange={(e) => setNewComm({...newComm, validFrom: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Válido Hasta</label>
+                <input
+                  type="date"
+                  value={newComm.validUntil}
+                  onChange={(e) => setNewComm({...newComm, validUntil: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Descripción */}
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
             <textarea
@@ -442,64 +620,64 @@ const CommunicationsManager = () => {
                   </tr>
                 ) : (
                   communications.map((comm) => (
-                <tr key={comm.id} className={comm.active ? '' : 'opacity-50'}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-12 w-12">
-                        <img
-                          className="h-12 w-12 rounded-lg object-cover"
-                          src={comm.image}
-                          alt={comm.title}
-                          onError={(e) => {
-                            e.target.src = '/placeholder-product.svg'
-                          }}
-                        />
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          {getTypeIcon(comm.type)} {comm.title}
+                    <tr key={comm.id} className={comm.active ? '' : 'opacity-50'}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-12 w-12">
+                            <img
+                              className="h-12 w-12 rounded-lg object-cover"
+                              src={comm.image}
+                              alt={comm.title}
+                              onError={(e) => {
+                                e.target.src = '/placeholder-product.svg'
+                              }}
+                            />
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {getTypeIcon(comm.type)} {comm.title}
+                            </div>
+                            <div className="text-sm text-gray-500">{comm.subtitle}</div>
+                            <div className={`inline-block px-2 py-1 text-xs font-bold text-white rounded-full ${getBadgeColor(comm.badge)}`}>
+                              {comm.badge}
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-500">{comm.subtitle}</div>
-                        <div className={`inline-block px-2 py-1 text-xs font-bold text-white rounded-full ${getBadgeColor(comm.badge)}`}>
-                          {comm.badge}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {comm.section === 'ambos' ? 'Ambas' : comm.section}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {comm.validFrom} - {comm.validUntil}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          comm.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {comm.active ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleToggleActive(comm.id, comm.active)}
+                            className={`px-3 py-1 text-xs rounded ${
+                              comm.active 
+                                ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                                : 'bg-green-100 text-green-700 hover:bg-green-200'
+                            }`}
+                          >
+                            {comm.active ? 'Desactivar' : 'Activar'}
+                          </button>
+                          <button
+                            onClick={() => handleDelete(comm.id)}
+                            className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
+                          >
+                            Eliminar
+                          </button>
                         </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {comm.section === 'ambos' ? 'Ambas' : comm.section}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {comm.validFrom} - {comm.validUntil}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      comm.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {comm.active ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleToggleActive(comm.id, comm.active)}
-                        className={`px-3 py-1 text-xs rounded ${
-                          comm.active 
-                            ? 'bg-red-100 text-red-700 hover:bg-red-200' 
-                            : 'bg-green-100 text-green-700 hover:bg-green-200'
-                        }`}
-                      >
-                        {comm.active ? 'Desactivar' : 'Activar'}
-                      </button>
-                      <button
-                        onClick={() => handleDelete(comm.id)}
-                        className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  </td>
-                  </tr>
+                      </td>
+                    </tr>
                   ))
                 )}
               </tbody>

@@ -120,3 +120,65 @@ export const toggleCommunicationStatus = async (id, active) => {
     throw error
   }
 }
+
+// Obtener comunicaciones para un cliente específico
+export const getClientCommunications = async (clientId, clientType) => {
+  try {
+    const now = new Date().toISOString().split('T')[0]
+    
+    // Obtener comunicados activos
+    const q = query(
+      collection(db, COLLECTION_NAME),
+      where('active', '==', true),
+      where('validFrom', '<=', now),
+      where('validUntil', '>=', now),
+      orderBy('createdAt', 'desc')
+    )
+    
+    const querySnapshot = await getDocs(q)
+    const allCommunications = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }))
+    
+    // Filtrar por cliente específico o tipo de cliente
+    const clientCommunications = allCommunications.filter(comm => {
+      // Si tiene targetClients definido, verificar que incluya este cliente
+      if (comm.targetClients && Array.isArray(comm.targetClients)) {
+        return comm.targetClients.includes(clientId) || comm.targetClients.length === 0
+      }
+      
+      // Si no tiene targetClients, aplicar filtro por tipo (section)
+      if (comm.section && clientType) {
+        const isTypeMatch = comm.section === clientType || comm.section === 'ambos'
+        return isTypeMatch
+      }
+      
+      // Si no hay ningún filtro específico, incluir
+      return true
+    })
+    
+    return clientCommunications
+  } catch (error) {
+    console.error('Error al obtener comunicaciones del cliente:', error)
+    return []
+  }
+}
+
+// Obtener promociones destacadas para dashboard
+export const getFeaturedPromotions = async (clientId, clientType, limit = 3) => {
+  try {
+    const communications = await getClientCommunications(clientId, clientType)
+    
+    // Filtrar solo promociones (no comunicados generales)
+    const promotions = communications.filter(comm => 
+      comm.type === 'promocion' || comm.type === 'producto-nuevo' || comm.badge
+    )
+    
+    // Ordenar por fecha y limitar
+    return promotions.slice(0, limit)
+  } catch (error) {
+    console.error('Error al obtener promociones destacadas:', error)
+    return []
+  }
+}

@@ -9,6 +9,7 @@ import cacheService from '../services/cacheService'
 const CommunicationsManager = React.lazy(() => import('../components/CommunicationsManager'))
 const BrandManager = React.lazy(() => import('../components/BrandManager'))
 const FeaturedProductsManager = React.lazy(() => import('../components/FeaturedProductsManager'))
+const PendingClientsList = React.lazy(() => import('../components/PendingClientsList'))
 
 // Componente de loading para componentes admin
 const AdminLoadingSpinner = () => (
@@ -24,6 +25,7 @@ const AdminPage = () => {
   const [loadingAnalytics, setLoadingAnalytics] = useState(false)
   const [showManagers, setShowManagers] = useState(false)
   const [showAnalytics, setShowAnalytics] = useState(false)
+  const [showClients, setShowClients] = useState(false)
   const [dateFilter, setDateFilter] = useState({
     startDate: '',
     endDate: '',
@@ -181,6 +183,13 @@ const AdminPage = () => {
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
               >
                 {showAnalytics ? '📊 Ocultar Analytics' : '📊 Mostrar Analytics'}
+              </button>
+              
+              <button
+                onClick={() => setShowClients(!showClients)}
+                className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+              >
+                {showClients ? '👥 Ocultar Clientes' : '👥 Gestionar Clientes'}
               </button>
               
               {/* Botón de Exportación PDF */}
@@ -483,6 +492,15 @@ const AdminPage = () => {
           <div className="mb-8">
             <Suspense fallback={<AdminLoadingSpinner />}>
               <FeaturedProductsManager />
+            </Suspense>
+          </div>
+        )}
+
+        {/* Gestión de Clientes */}
+        {showClients && (
+          <div className="mb-8">
+            <Suspense fallback={<AdminLoadingSpinner />}>
+              <PendingClientsList />
             </Suspense>
           </div>
         )}

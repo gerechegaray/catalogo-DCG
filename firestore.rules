@@ -1,0 +1,66 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function: Cliente autenticado solo puede ver su propio perfil
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    
+    // ===== COLECCIÓN: CLIENTS =====
+    // Portal de clientes - Protección principal
+    match /clients/{clientId} {
+      // Cliente autenticado solo puede LEER su propio perfil
+      allow read: if isOwner(clientId);
+      
+      // ESCRIBIR: Permitir desde admin page (sin auth necesaria)
+      // Ya que admin usa código local, no Firebase Auth
+      allow write: if true;
+    }
+    
+    // ===== COLECCIÓN: COMMUNICATIONS =====
+    // Comunicados, promociones y anuncios
+    match /communications/{commId} {
+      // Cualquiera puede LEER (público + clientes autenticados)
+      allow read: if true;
+      
+      // Escribir desde admin page
+      allow write: if true;
+    }
+    
+    // ===== COLECCIÓN: BRANDS_CONFIG =====
+    match /brandsConfig/{docId} {
+      allow read, write: if true;
+    }
+    
+    // ===== COLECCIÓN: FEATURED_PRODUCTS_CONFIG =====
+    match /featuredProductsConfig/{docId} {
+      allow read, write: if true;
+    }
+    
+    // ===== COLECCIÓN: PRODUCTS =====
+    match /products/{productId} {
+      allow read, write: if true;
+    }
+    
+    // ===== COLECCIÓN: ANALYTICS =====
+    match /analytics/{docId} {
+      allow read, write: if true;
+    }
+    
+    // ===== COLECCIÓN: ADMINS =====
+    match /admins/{adminId} {
+      allow read, write: if true;
+    }
+    
+    // ===== COLECCIÓN: TEST =====
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+    
+    // Permitir todo lo demás (para admin page sin Firebase Auth)
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

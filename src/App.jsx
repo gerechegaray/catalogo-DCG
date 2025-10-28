@@ -3,10 +3,12 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ProductProvider } from './context/ProductContext'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
+import { ClientAuthProvider } from './context/ClientAuthContext'
 import Header from './components/Header'
 import CartHeader from './components/CartHeader'
 import Footer from './components/Footer'
 import ProtectedRoute from './components/ProtectedRoute'
+import ProtectedClientRoute from './components/ProtectedClientRoute'
 import ProductSelectionBar from './components/ProductSelectionBar'
 import PageTracker from './components/PageTracker'
 
@@ -18,8 +20,13 @@ const PetShopsLandingPage = React.lazy(() => import('./pages/PetShopsLandingPage
 const PetShopsProductosPage = React.lazy(() => import('./pages/PetShopsPage'))
 const ContactPage = React.lazy(() => import('./pages/ContactPage'))
 const AdminPage = React.lazy(() => import('./pages/AdminPage'))
-const ProductDetailPage = React.lazy(() => import('./pages/ProductDetailPage'))
+const ProductDetailPage = React.lazy(() => import('./pages/ProductDetailPage')) 
 const PublicPage = React.lazy(() => import('./pages/PublicPage'))
+const ClientLoginPage = React.lazy(() => import('./pages/ClientLoginPage'))
+const ClientDashboardPage = React.lazy(() => import('./pages/ClientDashboardPage'))
+const ClientProfilePage = React.lazy(() => import('./pages/ClientProfilePage'))
+const ClientAccountPage = React.lazy(() => import('./pages/ClientAccountPage'))
+const ClientPromotionsPage = React.lazy(() => import('./pages/ClientPromotionsPage'))
 
 // Componente de loading
 const LoadingSpinner = () => (
@@ -35,9 +42,10 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <ProductProvider>
-          <div className="min-h-screen bg-white">
-            <Routes>
+        <ClientAuthProvider>
+          <ProductProvider>
+            <div className="min-h-screen bg-white">
+              <Routes>
               {/* Página pública */}
               <Route path="/" element={
                 <PageTracker>
@@ -185,6 +193,45 @@ function App() {
               </ProtectedRoute>
             } />
             
+            {/* Portal de Clientes */}
+            <Route path="/client/login" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <ClientLoginPage />
+              </Suspense>
+            } />
+            
+            <Route path="/client/dashboard" element={
+              <ProtectedClientRoute>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <ClientDashboardPage />
+                </Suspense>
+              </ProtectedClientRoute>
+            } />
+            
+            <Route path="/client/profile" element={
+              <ProtectedClientRoute>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <ClientProfilePage />
+                </Suspense>
+              </ProtectedClientRoute>
+            } />
+            
+            <Route path="/client/account" element={
+              <ProtectedClientRoute>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <ClientAccountPage />
+                </Suspense>
+              </ProtectedClientRoute>
+            } />
+            
+            <Route path="/client/promotions" element={
+              <ProtectedClientRoute>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <ClientPromotionsPage />
+                </Suspense>
+              </ProtectedClientRoute>
+            } />
+            
             {/* Redirección para rutas no encontradas */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
@@ -193,6 +240,7 @@ function App() {
           {/* <ProductSelectionBar /> */}
         </div>
         </ProductProvider>
+        </ClientAuthProvider>
       </AuthProvider>
     </Router>
   )
