@@ -1,0 +1,12 @@
+[
+  {
+    "origin": [
+      "https://catalogo-dcg.vercel.app",
+      "http://localhost:5173"
+    ],
+    "method": ["GET"],
+    "responseHeader": ["Content-Type", "Access-Control-Allow-Origin"],
+    "maxAgeSeconds": 3600
+  }
+]
+
