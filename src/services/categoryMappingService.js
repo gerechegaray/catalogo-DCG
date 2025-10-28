@@ -90,8 +90,9 @@ class CategoryMappingService {
    }
 
   // Obtener marcas de una categoría
-  getBrandsForCategory(categoryId) {
-    const category = this.navbarCategories.find(cat => cat.id === categoryId)
+  getBrandsForCategory(categoryId, isPetShop = false) {
+    const categories = isPetShop ? this.petshopsNavbarCategories : this.navbarCategories
+    const category = categories.find(cat => cat.id === categoryId)
     return category ? category.brands : []
   }
 

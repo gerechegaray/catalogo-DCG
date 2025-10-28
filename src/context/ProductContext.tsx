@@ -177,8 +177,11 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
 
   // Cargar productos al inicializar
   useEffect(() => {
-    loadProducts()
-  }, [])
+    // No cargar si es 'public' - solo cargar para vet, pet o admin
+    if (userType && userType !== 'public') {
+      loadProducts()
+    }
+  }, [userType])
 
   // Aplicar filtros cuando cambien
   useEffect(() => {
@@ -259,7 +262,7 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
   }
 
   // Cargar productos desde cache o Alegra
-  const loadProducts = async (): Promise<void> => {
+  const loadProducts = useCallback(async (): Promise<void> => {
     try {
       dispatch({ type: actionTypes.SET_LOADING, payload: true })
       
@@ -290,7 +293,7 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
       dispatch({ type: actionTypes.SET_ERROR, payload: error.message })
       dispatch({ type: actionTypes.SET_CACHE_STATUS, payload: 'error' })
     }
-  }
+  }, [userType, getFilteredProducts])
 
   // Aplicar filtros
   const applyFilters = (): void => {
@@ -374,7 +377,7 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
   
   const reloadProducts = useCallback((): void => {
     loadProducts()
-  }, [])
+  }, [loadProducts])
   
   const loadAnalytics = useCallback(async (): Promise<void> => {
     try {

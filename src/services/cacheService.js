@@ -925,21 +925,21 @@ class CacheService {
    * @returns {Promise<Array>} - Array de productos
    */
   async getProductsHybrid(userType = 'vet') {
-    try {
-      // Intentar obtener desde Storage primero
-      const storageAvailable = await this.isStorageCatalogAvailable(userType)
-      
-      if (storageAvailable) {
-        console.log('✅ Usando Storage como fuente principal')
-        return await this.getProductsFromStorage(userType)
-      } else {
-        console.log('⚠️ Storage no disponible, usando Firestore')
-        return await this.getProductsFromCache()
-      }
-    } catch (error) {
-      console.error('❌ Error en método híbrido:', error)
-      // Último fallback: leer desde Firestore
+    const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    
+    if (isDevelopment) {
+      // En desarrollo: usar Firestore directamente (evita CORS)
+      console.log('🔧 Desarrollo: Usando Firestore')
       return this.getProductsFromCache()
+    } else {
+      // En producción: usar Storage con fallback a Firestore
+      console.log('✅ Producción: Intentando desde Storage...')
+      try {
+        return await this.getProductsFromStorage(userType)
+      } catch (error) {
+        console.error('❌ Error con Storage, fallback a Firestore')
+        return this.getProductsFromCache()
+      }
     }
   }
 

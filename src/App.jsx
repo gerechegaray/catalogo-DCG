@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { ProductProvider } from './context/ProductContext'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
@@ -13,7 +13,8 @@ import ProductSelectionBar from './components/ProductSelectionBar'
 import PageTracker from './components/PageTracker'
 
 // Lazy loading de páginas
-const HomePage = React.lazy(() => import('./pages/HomePage'))
+const RestrictedAccessPage = React.lazy(() => import('./pages/RestrictedAccessPage'))
+const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'))
 const VeterinariosLandingPage = React.lazy(() => import('./pages/VeterinariosLandingPage'))
 const VeterinariosProductosPage = React.lazy(() => import('./pages/VeterinariosPage'))
 const PetShopsLandingPage = React.lazy(() => import('./pages/PetShopsLandingPage'))
@@ -46,11 +47,11 @@ function App() {
           <ProductProvider>
             <div className="min-h-screen bg-white">
               <Routes>
-              {/* Página pública */}
+              {/* Acceso restringido - Raíz */}
               <Route path="/" element={
                 <PageTracker>
                   <Suspense fallback={<LoadingSpinner />}>
-                    <HomePage />
+                    <RestrictedAccessPage />
                   </Suspense>
                 </PageTracker>
               } />
@@ -232,8 +233,14 @@ function App() {
               </ProtectedClientRoute>
             } />
             
-            {/* Redirección para rutas no encontradas */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* Página 404 para rutas no encontradas */}
+            <Route path="*" element={
+              <PageTracker>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <NotFoundPage />
+                </Suspense>
+              </PageTracker>
+            } />
           </Routes>
           
           {/* Barra de productos seleccionados */}

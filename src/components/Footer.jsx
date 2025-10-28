@@ -33,7 +33,7 @@ const Footer = () => {
                 'Distribuidores de insumos veterinarios, productos medicinales veterinarios y representantes en San Juan de Agroindustrias Baires e Insuga Pet Food.' :
                 isPetShops ?
                 'Distribuidores especializados en alimentos premium para mascotas, productos de higiene y cuidado animal. Representantes en San Juan de Agroindustrias Baires e Insuga Pet Food.' :
-                'Distribuidores especializados en productos veterinarios y pet shop. Precios y stock actualizados en tiempo real con Alegra.'
+                'Distribuidores especializados en productos veterinarios y pet shop.'
               }
             </p>
           </div>
@@ -93,14 +93,9 @@ const Footer = () => {
 
         {/* Línea divisoria */}
         <div className="border-t border-gray-700 mt-8 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
+          <div className="text-center">
             <div className="text-sm text-gray-400">
               © 2025 DCG Distribuciones. Todos los derechos reservados.
-            </div>
-            <div className="flex space-x-6 mt-4 md:mt-0">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">Política de Privacidad</a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">Términos y Condiciones</a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">Soporte</a>
             </div>
           </div>
         </div>

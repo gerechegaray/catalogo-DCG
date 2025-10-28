@@ -1,3 +1,5 @@
+import categoryMappingService from './categoryMappingService'
+
 // Servicio para manejar filtros escalonados (en cascada)
 class CascadingFiltersService {
   constructor() {
@@ -265,54 +267,26 @@ class CascadingFiltersService {
   // Filtrar productos por categoría principal (basado en marcas específicas)
   filterByMainCategory(section, category, products) {
     const filtered = products.filter(product => {
-      const productCategory = (product.category || product.description || '').toLowerCase()
+      // Para Pet Shops, usar description (marca/laboratorio) como categoría principal
+      const productCategory = section === 'petshops' 
+        ? (product.description || product.category || '').toLowerCase()
+        : (product.category || product.description || '').toLowerCase()
       const productName = (product.name || '').toLowerCase()
       
        // Mapeo basado en las marcas específicas que me diste
        let matches = false
        switch (category) {
          case 'salud-comportamiento':
-           // Para Pet Shops: incluir todos los productos que tienen lista "pet" (antiparasitarios, higiene, etc.)
-           matches = productCategory.includes('frontline') || 
-                    productCategory.includes('advantix') ||
-                    productCategory.includes('drontal') ||
-                    productCategory.includes('royal canin') ||
-                    productCategory.includes('hills') ||
-                    productName.includes('frontline') ||
-                    productName.includes('advantix') ||
-                    productName.includes('drontal') ||
-                    productName.includes('royal canin') ||
-                    productName.includes('hills') ||
-                    // Palabras clave genéricas para salud y comportamiento
-                    productName.includes('antiparasitario') ||
-                    productName.includes('pipeta') ||
-                    productName.includes('pastilla') ||
-                    productName.includes('shampoo') ||
-                    productName.includes('higiene') ||
-                    productName.includes('comportamiento') ||
-                    productName.includes('medicamento') ||
-                    productName.includes('vacuna') ||
-                    productName.includes('analgesico') ||
-                    productName.includes('antibiotico') ||
-                    // Incluir marcas de medicamentos que también se venden en pet shops
-                    productCategory.includes('generar') ||
-                    productCategory.includes('elmer') ||
-                    productCategory.includes('zoovet') ||
-                    productCategory.includes('leon pharma') ||
-                    productCategory.includes('jenner') ||
-                    productCategory.includes('ruminal') ||
-                    productCategory.includes('tecnovax') ||
-                    productCategory.includes('mervak') ||
-                    productCategory.includes('zoetis') ||
-                    productName.includes('generar') ||
-                    productName.includes('elmer') ||
-                    productName.includes('zoovet') ||
-                    productName.includes('leon pharma') ||
-                    productName.includes('jenner') ||
-                    productName.includes('ruminal') ||
-                    productName.includes('tecnovax') ||
-                    productName.includes('mervak') ||
-                    productName.includes('zoetis')
+           // Para Pet Shops: usar las marcas definidas en categoryMappingService
+           const brandsForSalud = section === 'petshops' 
+             ? categoryMappingService.getBrandsForCategory('salud-comportamiento', true)
+             : categoryMappingService.getBrandsForCategory('salud-comportamiento', false)
+           
+           // Verificar si el producto pertenece a alguna de las marcas definidas
+           matches = brandsForSalud.some(brand => 
+             productCategory.includes(brand.toLowerCase()) || 
+             productName.includes(brand.toLowerCase())
+           )
            break
          
          case 'medicamentos':
