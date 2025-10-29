@@ -218,13 +218,6 @@ const ClientAccountPage: React.FC = () => {
             </div>
           )}
         </div>
-
-        {/* Mensaje de Info */}
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-blue-900">
-            ℹ️ <strong>Nota:</strong> Los datos se sincronizan automáticamente con Alegra
-          </p>
-        </div>
       </div>
     </div>
   )

@@ -58,7 +58,7 @@ const DynamicNavbar = () => {
 
   return (
     <div className={`bg-gradient-to-r ${colors.bg} text-white shadow-lg relative z-50`}>
-      <div className="w-full px-2 sm:px-4">
+      <div className="container mx-auto px-4">
         {/* Versión Desktop - Navegación horizontal */}
         <nav className="hidden lg:flex items-center space-x-2 py-4 overflow-x-auto scrollbar-hide">
           {isAdmin ? (
