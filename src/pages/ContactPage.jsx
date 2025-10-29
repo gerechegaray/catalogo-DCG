@@ -31,27 +31,21 @@ const ContactPage = () => {
     // Crear mensaje de WhatsApp
     const getTypeText = (type) => {
       switch(type) {
-        case 'quiero-ser-cliente': return 'Quiero ser cliente'
-        case 'soy-cliente': return 'Soy cliente'
-        case 'facturacion': return 'Facturación'
-        case 'otro': return 'Otro'
-        default: return 'Quiero ser cliente'
+        case 'quiero-ser-cliente': return 'estoy interesado en convertirse en cliente'
+        case 'soy-cliente': return 'soy cliente existente'
+        case 'facturacion': return 'necesito consultar sobre facturación'
+        case 'otro': return 'tengo una consulta'
+        default: return 'estoy interesado en convertirse en cliente'
       }
     }
     
-    const whatsappMessage = `🏥 *DCG DISTRIBUCIONES - Nuevo Contacto*
+    const whatsappMessage = `Hola!
 
-👤 *Información del Cliente:*
-• Nombre: ${formData.name}
-• Tipo de Consulta: ${getTypeText(formData.type)}
+Mi nombre es ${formData.name} y me comunico porque ${getTypeText(formData.type)}.
 
-💬 *Consulta:*
 ${formData.message}
 
-📅 *Fecha:* ${new Date().toLocaleDateString('es-CO')}
-🕐 *Hora:* ${new Date().toLocaleTimeString('es-CO')}
-
-¡Gracias por contactarnos! Responderemos a la brevedad.`
+Espero su respuesta. Muchas gracias!`
 
     // Número de WhatsApp - NÚMERO REAL DE LA OFICINA
     const whatsappNumber = '5492645438284' // Formato: código país + número sin espacios ni símbolos
@@ -105,7 +99,7 @@ ${formData.message}
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800">WhatsApp</h3>
-                      <p className="text-gray-600">+54 9 264 543 8284</p>
+                      <p className="text-gray-600">264 543 8284</p>
                     </div>
                   </div>
 
@@ -117,7 +111,7 @@ ${formData.message}
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800">Email</h3>
-                      <p className="text-gray-600">contacto@dcgdistribuciones.com</p>
+                      <p className="text-gray-600">dcg.distribucion@gmail.com</p>
                     </div>
                   </div>
                 </div>

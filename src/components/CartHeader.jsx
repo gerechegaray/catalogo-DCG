@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import DynamicNavbar from './DynamicNavbar'
 import CartSidebar from './CartSidebar'
@@ -10,10 +10,14 @@ const CartHeader = () => {
   const navigate = useNavigate()
   const [isCartOpen, setIsCartOpen] = useState(false)
   const { totalItems } = useCart()
+  const mobileSearchInputRef = useRef(null)
+  const desktopSearchInputRef = useRef(null)
   
   // Determinar el subtítulo basado en la ruta actual
   const getSubtitle = () => {
-    if (location.pathname.startsWith('/veterinarios')) {
+    if (location.pathname.startsWith('/admin')) {
+      return 'Admin'
+    } else if (location.pathname.startsWith('/veterinarios')) {
       return 'Línea Veterinaria'
     } else if (location.pathname.startsWith('/petshops')) {
       return 'Pet Shops'
@@ -37,7 +41,9 @@ const CartHeader = () => {
 
   // Determinar la URL del logo basada en la ruta actual
   const getLogoUrl = () => {
-    if (location.pathname.startsWith('/veterinarios')) {
+    if (location.pathname.startsWith('/admin')) {
+      return '/admin'
+    } else if (location.pathname.startsWith('/veterinarios')) {
       return '/veterinarios'
     } else if (location.pathname.startsWith('/petshops')) {
       return '/petshops'
@@ -82,10 +88,11 @@ const CartHeader = () => {
             </button>
           </div>
 
-          {/* Búsqueda móvil - debajo del título */}
+            {/* Búsqueda móvil - debajo del título */}
           <div className="w-full">
             <div className="relative">
               <input
+                ref={mobileSearchInputRef}
                 type="text"
                 placeholder="¿Qué producto está buscando?..."
                 className="w-full px-4 py-3 bg-white/95 backdrop-blur-sm border-2 border-white/30 rounded-xl focus:ring-4 focus:ring-white/50 focus:border-white shadow-xl text-gray-800 placeholder-gray-500 pr-12 text-base"
@@ -98,8 +105,9 @@ const CartHeader = () => {
               <button 
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors shadow-lg"
                 onClick={() => {
-                  const input = document.querySelector('input[placeholder*="producto"]')
-                  handleSearch(input.value)
+                  if (mobileSearchInputRef.current) {
+                    handleSearch(mobileSearchInputRef.current.value)
+                  }
                 }}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,6 +139,7 @@ const CartHeader = () => {
           <div className="flex-1 max-w-2xl mx-8">
             <div className="relative">
               <input
+                ref={desktopSearchInputRef}
                 type="text"
                 placeholder="¿Qué producto está buscando?..."
                 className="w-full px-6 py-4 bg-white/95 backdrop-blur-sm border-2 border-white/30 rounded-2xl focus:ring-4 focus:ring-white/50 focus:border-white shadow-xl text-gray-800 placeholder-gray-500 pr-14"
@@ -143,8 +152,9 @@ const CartHeader = () => {
               <button 
                 className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-xl transition-colors shadow-lg"
                 onClick={() => {
-                  const input = document.querySelector('input[placeholder*="producto"]')
-                  handleSearch(input.value)
+                  if (desktopSearchInputRef.current) {
+                    handleSearch(desktopSearchInputRef.current.value)
+                  }
                 }}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

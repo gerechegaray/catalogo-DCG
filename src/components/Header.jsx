@@ -1,10 +1,11 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import DynamicNavbar from './DynamicNavbar'
 
 const Header = () => {
   const location = useLocation()
   const navigate = useNavigate()
+  const searchInputRef = useRef(null)
   
   // Determinar el subtítulo basado en la ruta actual
   const getSubtitle = () => {
@@ -67,6 +68,7 @@ const Header = () => {
           <div className="flex-1 max-w-2xl mx-8">
             <div className="relative">
               <input
+                ref={searchInputRef}
                 type="text"
                 placeholder="¿Qué producto está buscando?..."
                 className="w-full px-6 py-4 bg-white/95 backdrop-blur-sm border-2 border-white/30 rounded-2xl focus:ring-4 focus:ring-white/50 focus:border-white shadow-xl text-gray-800 placeholder-gray-500 pr-14"
@@ -79,8 +81,9 @@ const Header = () => {
               <button 
                 className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-xl transition-colors shadow-lg"
                 onClick={() => {
-                  const input = document.querySelector('input[placeholder*="producto"]')
-                  handleSearch(input.value)
+                  if (searchInputRef.current) {
+                    handleSearch(searchInputRef.current.value)
+                  }
                 }}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

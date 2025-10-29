@@ -7,8 +7,8 @@ class WhatsAppService {
   private footerMessage: string
 
   constructor() {
-    this.baseMessage = '🛒 *Nuevo Pedido*'
-    this.footerMessage = '\n\n¿Te interesa alguno de estos productos?'
+    this.baseMessage = 'Hola!'
+    this.footerMessage = '\n\nEspero confirmación del pedido. Gracias!'
   }
 
   // Generar mensaje de WhatsApp con productos seleccionados
@@ -19,18 +19,9 @@ class WhatsAppService {
       }
 
       let message = this.baseMessage
-      
-      // Agregar información del cliente si está disponible
-      if (clientInfo.name) {
-        message += `\n\n👤 Cliente: ${clientInfo.name}`
-      }
-      
-      if (clientInfo.phone) {
-        message += `\n📞 Teléfono: ${clientInfo.phone}`
-      }
 
       // Agregar productos
-      message += '\n\n📦 *Productos seleccionados:*'
+      message += '\n\nPedido:'
       
       let total = 0
       selectedProducts.forEach((product, index) => {
@@ -38,29 +29,11 @@ class WhatsAppService {
         const subtotal = product.price * quantity
         total += subtotal
         
-        message += `\n${index + 1}. ${product.name}`
-        message += `\n   💰 Precio: $${this.formatPrice(product.price)}`
-        message += `\n   📊 Cantidad: ${quantity}`
-        message += `\n   💵 Subtotal: $${this.formatPrice(subtotal)}`
-        
-        if (product.code) {
-          message += `\n   🏷️ Código: ${product.code}`
-        }
-        
-        if (product.supplier) {
-          message += `\n   🏢 Proveedor: ${product.supplier}`
-        }
-        
-        message += '\n'
+        message += `\n${index + 1}. ${product.name} - $${this.formatPrice(product.price)} x ${quantity} = $${this.formatPrice(subtotal)}`
       })
 
       // Agregar total
-      message += `\n💰 *Total estimado: $${this.formatPrice(total)}*`
-
-      // Agregar información adicional
-      message += '\n\n📋 *Información adicional:*'
-      message += `\n📅 Fecha: ${new Date().toLocaleDateString('es-CO')}`
-      message += `\n🕒 Hora: ${new Date().toLocaleTimeString('es-CO')}`
+      message += `\n\nTotal estimado: $${this.formatPrice(total)}`
       
       // Agregar footer
       message += this.footerMessage

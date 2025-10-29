@@ -103,12 +103,28 @@ const ClientDashboardPage: React.FC = () => {
               <p className="text-sm text-gray-600">{client.displayName}</p>
             )}
           </div>
-          <button
-            onClick={handleLogout}
-            className="text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            Cerrar Sesión
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => {
+                if (client?.type === 'vet') {
+                  navigate('/veterinarios')
+                } else if (client?.type === 'pet') {
+                  navigate('/petshops')
+                } else {
+                  navigate('/')
+                }
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+            >
+              Ir a Catálogo
+            </button>
+            <button
+              onClick={handleLogout}
+              className="text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Cerrar Sesión
+            </button>
+          </div>
         </div>
       </header>
 

@@ -129,10 +129,13 @@ const CartSidebar = ({ isOpen, onClose }) => {
             </div>
 
             <div className="border-t pt-4 mt-4">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex justify-between items-center mb-2">
                 <span className="text-lg font-semibold text-gray-800">Total Estimado:</span>
                 <span className="text-xl font-bold text-blue-600">{formatPrice(totalPrice)}</span>
               </div>
+              <p className="text-xs text-gray-500 mb-4 text-center">
+                El total estimado es calculado según precios de lista, no está aplicado ningún descuento ni promoción.
+              </p>
               <button
                 onClick={handleSendWhatsApp}
                 className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center transition-colors"

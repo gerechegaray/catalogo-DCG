@@ -5,7 +5,6 @@ import ProductCardWithCart from '../components/ProductCardWithCart'
 import ProductDebug from '../components/ProductDebug'
 import CascadingFilters from '../components/CascadingFilters'
 import MobileCascadingFilters from '../components/MobileCascadingFilters'
-import cacheService from '../services/cacheService'
 import cascadingFiltersService from '../services/cascadingFiltersService'
 
 const PetShopsProductosPage = () => {
@@ -23,7 +22,6 @@ const PetShopsProductosPage = () => {
   
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedPath, setSelectedPath] = useState([])
-  const [clearingCache, setClearingCache] = useState(false)
 
   // Manejar parámetros de URL para filtros de navbar y búsqueda
   useEffect(() => {
@@ -44,23 +42,6 @@ const PetShopsProductosPage = () => {
       setSearch(searchParam)
     }
   }, [location.search, setSearch])
-
-  // Función para limpiar cache y recargar datos
-  const handleClearCache = async () => {
-    if (window.confirm('¿Limpiar cache y recargar datos desde Alegra? Esto puede tomar unos minutos.')) {
-      setClearingCache(true)
-      try {
-        await cacheService.clearAll()
-        await reloadProducts()
-        alert('✅ Cache limpiado y datos actualizados desde Alegra')
-      } catch (error) {
-        console.error('Error:', error)
-        alert('❌ Error al limpiar cache: ' + error.message)
-      } finally {
-        setClearingCache(false)
-      }
-    }
-  }
 
   // Manejar búsqueda
   const handleSearch = (e) => {
@@ -111,23 +92,12 @@ const PetShopsProductosPage = () => {
           {/* Layout móvil: búsqueda en fila separada */}
           <div className="lg:hidden space-y-3">
             {/* Filtros móvil */}
-            <div className="flex items-center gap-2">
-              <MobileCascadingFilters 
-                section="petshops" 
-                selectedPath={selectedPath}
-                onPathChange={setSelectedPath}
-                products={getDisplayProducts()}
-              />
-              
-              {/* Botón para limpiar cache */}
-              <button
-                onClick={handleClearCache}
-                disabled={clearingCache}
-                className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm whitespace-nowrap ml-auto"
-              >
-                {clearingCache ? '🔄 Limpiando...' : '🗑️ Limpiar Cache'}
-              </button>
-            </div>
+            <MobileCascadingFilters 
+              section="petshops" 
+              selectedPath={selectedPath}
+              onPathChange={setSelectedPath}
+              products={getDisplayProducts()}
+            />
             
             {/* Búsqueda móvil */}
             <div className="w-full">
@@ -161,15 +131,6 @@ const PetShopsProductosPage = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-            
-            {/* Botón para limpiar cache */}
-            <button
-              onClick={handleClearCache}
-              disabled={clearingCache}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {clearingCache ? '🔄 Limpiando...' : '🗑️ Limpiar Cache'}
-            </button>
           </div>
         </div>
 

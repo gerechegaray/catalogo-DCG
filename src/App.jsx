@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { ProductProvider } from './context/ProductContext'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
@@ -195,6 +195,8 @@ function App() {
             } />
             
             {/* Portal de Clientes */}
+            <Route path="/client" element={<Navigate to="/client/login" replace />} />
+            
             <Route path="/client/login" element={
               <Suspense fallback={<LoadingSpinner />}>
                 <ClientLoginPage />
