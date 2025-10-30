@@ -1,13 +1,40 @@
 // Script para generar catálogos desde Alegra y guardarlos localmente
 import axios from 'axios';
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Cargar variables de entorno desde .env
+function loadEnv() {
+  const envPath = join(process.cwd(), '.env');
+  if (existsSync(envPath)) {
+    const envContent = readFileSync(envPath, 'utf8');
+    envContent.split('\n').forEach(line => {
+      const trimmedLine = line.trim();
+      if (trimmedLine && !trimmedLine.startsWith('#')) {
+        const [key, ...valueParts] = trimmedLine.split('=');
+        const value = valueParts.join('=').trim();
+        if (key.trim()) {
+          process.env[key.trim()] = value;
+        }
+      }
+    });
+  }
+}
+
+loadEnv();
 
 async function generateCatalogs() {
   try {
     console.log('🔄 Iniciando generación de catálogos...');
     
     // Credenciales de Alegra desde variables de entorno
-    const ALEGRA_API_KEY = process.env.ALEGRA_API_KEY;
-    const ALEGRA_BASE_URL = process.env.ALEGRA_BASE_URL || 'https://api.alegra.com/api/v1';
+    const ALEGRA_API_KEY = process.env.VITE_ALEGRA_API_KEY || process.env.ALEGRA_API_KEY;
+    const ALEGRA_BASE_URL = process.env.VITE_ALEGRA_BASE_URL || process.env.ALEGRA_BASE_URL || 'https://api.alegra.com/api/v1';
     
     if (!ALEGRA_API_KEY) {
       throw new Error('❌ ALEGRA_API_KEY no está configurada en las variables de entorno');
@@ -134,7 +161,7 @@ async function generateCatalogs() {
     console.log('🎉 Archivos JSON generados exitosamente');
     console.log('');
     console.log('⚠️  Ahora súbelos manualmente a Firebase Storage:');
-    console.log('   1. Ve a: https://console.firebase.google.com/project/catalogo-veterinaria-alegra/storage');
+    console.log('   1. Ve a Firebase Console > Storage');
     console.log('   2. Selecciona la carpeta "catalog"');
     console.log('   3. Sube "veterinarios.json" y "petshops.json"');
     
