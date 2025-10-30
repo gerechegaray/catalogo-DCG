@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { getAllBrands, saveBrand, updateBrand, deleteBrand, saveBrandsConfig } from '../services/brandsService'
 import { populateInitialBrands } from '../utils/populateBrands'
 import { replaceConfigFile, showConfigContent, applyConfigChanges } from '../utils/configFileManager'
+import { ref, uploadString } from 'firebase/storage'
+import { storage } from '../config/firebase'
 
 const BrandManager = () => {
   const [brands, setBrands] = useState([])
@@ -115,11 +117,32 @@ const BrandManager = () => {
         }
       }
 
-      // Aplicar cambios automáticamente (desarrollo o producción)
-      await applyConfigChanges(config)
-      
-      // Guardar en Firebase también
+      // Guardar en Firestore
       await saveBrandsConfig(config)
+      
+      // Subir a Firebase Storage en producción
+      const isDevelopment = window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1'
+      
+      if (!isDevelopment && storage) {
+        try {
+          console.log('📤 Subiendo configuración a Firebase Storage...')
+          const configJson = JSON.stringify(config, null, 2)
+          const storageRef = ref(storage, 'config/brandsConfig.json')
+          await uploadString(storageRef, configJson, 'raw')
+          console.log('✅ Configuración subida a Firebase Storage exitosamente')
+          
+          alert('✅ Configuración actualizada correctamente!\n\nLos cambios se verán reflejados en la página de veterinarios y petshops.')
+        } catch (storageError) {
+          console.error('Error subiendo a Storage:', storageError)
+          alert('⚠️ Configuración guardada en Firestore pero error al subir a Storage.\n\nPor favor, verifica los permisos de Firebase Storage.')
+        }
+      }
+      
+      // En desarrollo, descargar archivo para reemplazo manual
+      if (isDevelopment) {
+        await applyConfigChanges(config)
+      }
       
     } catch (error) {
       console.error('Error al generar configuración:', error)
