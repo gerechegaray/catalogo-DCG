@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { getAllBrands, saveBrand, updateBrand, deleteBrand, saveBrandsConfig } from '../services/brandsService'
 import { populateInitialBrands } from '../utils/populateBrands'
 import { replaceConfigFile, showConfigContent, applyConfigChanges } from '../utils/configFileManager'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { ref, uploadBytes, getDownloadURL, uploadString } from 'firebase/storage'
 import { storage } from '../config/firebase'
 
 const BrandManager = () => {
@@ -47,6 +47,10 @@ const BrandManager = () => {
       
       await saveBrand({ ...newBrand, logo: logoUrl })
       await loadBrands()
+      
+      // Actualizar automáticamente la configuración en Storage
+      await updateBrandsConfigInStorage()
+      
       setNewBrand({
         name: '',
         logo: '',
@@ -73,6 +77,10 @@ const BrandManager = () => {
       
       await updateBrand(editingBrand.id, { ...editingBrand, logo: logoUrl })
       await loadBrands()
+      
+      // Actualizar automáticamente la configuración en Storage
+      await updateBrandsConfigInStorage()
+      
       setEditingBrand(null)
       setLogoPreview(null)
       setLogoFile(null)
@@ -103,6 +111,64 @@ const BrandManager = () => {
         console.error('Error al poblar marcas iniciales:', error)
         alert('❌ Error al agregar marcas iniciales: ' + error.message)
       }
+    }
+  }
+
+  // Función para actualizar la configuración en Storage automáticamente
+  const updateBrandsConfigInStorage = async () => {
+    try {
+      const veterinariosBrands = brands.filter(brand => 
+        brand.category === 'veterinarios' || brand.category === 'ambos'
+      )
+      const petshopsBrands = brands.filter(brand => 
+        brand.category === 'petshops' || brand.category === 'ambos'
+      )
+
+      const config = {
+        veterinarios: {
+          title: 'Laboratorios y Marcas',
+          subtitle: '',
+          brands: veterinariosBrands.map(brand => ({
+            name: brand.name,
+            logo: brand.logo,
+            color: brand.color,
+            description: brand.description
+          }))
+        },
+        petshops: {
+          title: 'Laboratorios y Marcas',
+          subtitle: '',
+          brands: petshopsBrands.map(brand => ({
+            name: brand.name,
+            logo: brand.logo,
+            color: brand.color,
+            description: brand.description
+          }))
+        }
+      }
+
+      // Guardar en Firestore
+      await saveBrandsConfig(config)
+      
+      // Subir a Firebase Storage en producción
+      const isDevelopment = window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1'
+      
+      if (!isDevelopment && storage) {
+        try {
+          console.log('📤 Actualizando configuración en Firebase Storage...')
+          const configJson = JSON.stringify(config, null, 2)
+          const storageRef = ref(storage, 'config/brandsConfig.json')
+          await uploadString(storageRef, configJson, 'raw')
+          console.log('✅ Configuración actualizada en Firebase Storage')
+        } catch (storageError) {
+          console.error('Error subiendo a Storage:', storageError)
+          // No mostrar error al usuario, solo log
+        }
+      }
+    } catch (error) {
+      console.error('Error actualizando configuración:', error)
+      // No mostrar error al usuario, solo log
     }
   }
 
