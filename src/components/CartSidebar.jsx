@@ -1,12 +1,15 @@
 import React from 'react'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
 import { X, Plus, Minus, Trash2, ShoppingCart } from 'lucide-react'
 import whatsappService from '../services/whatsappService'
+import { handleError } from '../utils/errorHandler'
 
 const CartSidebar = ({ isOpen, onClose }) => {
   const { items, totalItems, totalPrice, updateQuantity, removeFromCart, clearCart } = useCart()
   const { userType } = useAuth()
+  const { showSuccess, showError, showWarning } = useToast()
 
   // Generar mensaje de WhatsApp con el pedido
   const generateWhatsAppMessage = () => {
@@ -30,7 +33,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
   // Enviar pedido por WhatsApp
   const handleSendWhatsApp = async () => {
     if (items.length === 0) {
-      alert('El pedido está vacío. Agrega productos antes de enviar.')
+      showWarning('El pedido está vacío. Agrega productos antes de enviar.')
       return
     }
 
@@ -52,9 +55,13 @@ const CartSidebar = ({ isOpen, onClose }) => {
       // Limpiar pedido después de enviar
       clearCart()
       onClose()
+      showSuccess('✅ Pedido enviado por WhatsApp exitosamente')
     } catch (error) {
-      console.error('Error enviando pedido por WhatsApp:', error)
-      alert('Error al enviar el pedido por WhatsApp')
+      const errorMessage = handleError(error, {
+        component: 'CartSidebar',
+        action: 'handleSendWhatsApp'
+      })
+      showError(errorMessage)
     }
   }
 

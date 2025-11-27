@@ -4,6 +4,8 @@ import { ProductProvider } from './context/ProductContext'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import { ClientAuthProvider } from './context/ClientAuthContext'
+import { ToastProvider } from './context/ToastContext'
+import ErrorBoundary from './components/ErrorBoundary'
 import Header from './components/Header'
 import CartHeader from './components/CartHeader'
 import Footer from './components/Footer'
@@ -41,11 +43,13 @@ const LoadingSpinner = () => (
 
 function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <ClientAuthProvider>
-          <ProductProvider>
-            <div className="min-h-screen bg-white">
+    <ErrorBoundary>
+      <ToastProvider>
+        <Router>
+          <AuthProvider>
+            <ClientAuthProvider>
+              <ProductProvider>
+                <div className="min-h-screen bg-white">
               <Routes>
               {/* Acceso restringido - Raíz */}
               <Route path="/" element={
@@ -248,10 +252,12 @@ function App() {
           {/* Barra de productos seleccionados */}
           {/* <ProductSelectionBar /> */}
         </div>
-        </ProductProvider>
-        </ClientAuthProvider>
-      </AuthProvider>
-    </Router>
+                </ProductProvider>
+              </ClientAuthProvider>
+            </AuthProvider>
+          </Router>
+        </ToastProvider>
+      </ErrorBoundary>
   )
 }
 

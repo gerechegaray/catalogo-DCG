@@ -4,8 +4,11 @@ import { populateInitialBrands } from '../utils/populateBrands'
 import { replaceConfigFile, showConfigContent, applyConfigChanges } from '../utils/configFileManager'
 import { ref, uploadBytes, getDownloadURL, uploadString } from 'firebase/storage'
 import { storage } from '../config/firebase'
+import { useToast } from '../context/ToastContext'
+import { handleError } from '../utils/errorHandler'
 
 const BrandManager = () => {
+  const { showSuccess, showError } = useToast()
   const [brands, setBrands] = useState([])
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
@@ -61,9 +64,13 @@ const BrandManager = () => {
       setLogoPreview(null)
       setLogoFile(null)
       setShowAddForm(false)
+      showSuccess('✅ Marca agregada exitosamente')
     } catch (error) {
-      console.error('Error al agregar marca:', error)
-      alert('❌ Error al agregar marca: ' + error.message)
+      const errorMessage = handleError(error, {
+        component: 'BrandManager',
+        action: 'handleAddBrand'
+      })
+      showError(errorMessage)
     }
   }
 
@@ -84,9 +91,13 @@ const BrandManager = () => {
       setEditingBrand(null)
       setLogoPreview(null)
       setLogoFile(null)
+      showSuccess('✅ Marca actualizada exitosamente')
     } catch (error) {
-      console.error('Error al actualizar marca:', error)
-      alert('❌ Error al actualizar marca: ' + error.message)
+      const errorMessage = handleError(error, {
+        component: 'BrandManager',
+        action: 'handleUpdateBrand'
+      })
+      showError(errorMessage)
     }
   }
 
@@ -106,10 +117,13 @@ const BrandManager = () => {
       try {
         await populateInitialBrands()
         await loadBrands()
-        alert('✅ Marcas iniciales agregadas exitosamente')
+        showSuccess('✅ Marcas iniciales agregadas exitosamente')
       } catch (error) {
-        console.error('Error al poblar marcas iniciales:', error)
-        alert('❌ Error al agregar marcas iniciales: ' + error.message)
+        const errorMessage = handleError(error, {
+          component: 'BrandManager',
+          action: 'handlePopulateInitialBrands'
+        })
+        showError(errorMessage)
       }
     }
   }
@@ -219,10 +233,13 @@ const BrandManager = () => {
           await uploadString(storageRef, configJson, 'raw')
           console.log('✅ Configuración subida a Firebase Storage exitosamente')
           
-          alert('✅ Configuración actualizada correctamente!\n\nLos cambios se verán reflejados en la página de veterinarios y petshops.')
+          showSuccess('✅ Configuración actualizada correctamente. Los cambios se verán reflejados en la página de veterinarios y petshops.')
         } catch (storageError) {
-          console.error('Error subiendo a Storage:', storageError)
-          alert('⚠️ Configuración guardada en Firestore pero error al subir a Storage.\n\nPor favor, verifica los permisos de Firebase Storage.')
+          const errorMessage = handleError(storageError, {
+            component: 'BrandManager',
+            action: 'generateStaticConfig - Storage upload'
+          })
+          showError('⚠️ Configuración guardada en Firestore pero error al subir a Storage. ' + errorMessage)
         }
       }
       
@@ -232,8 +249,11 @@ const BrandManager = () => {
       }
       
     } catch (error) {
-      console.error('Error al generar configuración:', error)
-      alert('❌ Error al generar configuración: ' + error.message)
+      const errorMessage = handleError(error, {
+        component: 'BrandManager',
+        action: 'generateStaticConfig'
+      })
+      showError(errorMessage)
     }
   }
 
