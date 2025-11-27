@@ -10,7 +10,7 @@ const ProductDetailPage = () => {
   const location = useLocation()
   const { products } = useProducts()
   const { addToCart } = useCart()
-  
+
   const [product, setProduct] = useState(null)
   const [quantity, setQuantity] = useState(1)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
@@ -19,7 +19,7 @@ const ProductDetailPage = () => {
 
   // Encontrar el producto por ID
   useEffect(() => {
-    const foundProduct = products.find(p => p.id === productId)
+    const foundProduct = products.find(p => String(p.id) === productId || p.id === Number(productId))
     if (foundProduct) {
       setProduct(foundProduct)
     } else {
@@ -57,14 +57,14 @@ const ProductDetailPage = () => {
   // Agregar al carrito
   const handleAddToCart = async () => {
     if (isAddingToCart || !product) return
-    
+
     setIsAddingToCart(true)
-    
+
     // Agregar la cantidad especificada
     for (let i = 0; i < quantity; i++) {
       addToCart(product)
     }
-    
+
     setTimeout(() => {
       setIsAddingToCart(false)
     }, 500)
@@ -109,7 +109,7 @@ const ProductDetailPage = () => {
                   }}
                 />
               ) : null}
-              <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-6xl rounded-2xl" style={{display: product.image ? 'none' : 'flex'}}>
+              <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-6xl rounded-2xl" style={{ display: product.image ? 'none' : 'flex' }}>
                 📦
               </div>
             </div>
@@ -121,9 +121,8 @@ const ProductDetailPage = () => {
                   <button
                     key={index}
                     onClick={() => setSelectedImageIndex(index)}
-                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                      selectedImageIndex === index ? 'border-blue-500' : 'border-gray-200'
-                    }`}
+                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${selectedImageIndex === index ? 'border-blue-500' : 'border-gray-200'
+                      }`}
                   >
                     <img
                       src={image}
@@ -141,20 +140,19 @@ const ProductDetailPage = () => {
             {/* Nombre y acciones */}
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
-              
+
               {/* Botones de acción */}
               <div className="flex items-center space-x-3 mt-4">
                 <button
                   onClick={() => setIsFavorite(!isFavorite)}
-                  className={`p-2 rounded-full transition-colors ${
-                    isFavorite 
-                      ? 'bg-red-100 text-red-600' 
+                  className={`p-2 rounded-full transition-colors ${isFavorite
+                      ? 'bg-red-100 text-red-600'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
+                    }`}
                 >
                   <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
                 </button>
-                
+
                 <button
                   onClick={handleShare}
                   className="p-2 bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-full transition-colors"
@@ -172,29 +170,29 @@ const ProductDetailPage = () => {
                 </span>
                 <span className="text-gray-500">c/u</span>
               </div>
-              
+
               {/* Precio sugerido para Alimento Perro y Alimento Gato */}
-              {(product.category?.toLowerCase().includes('alimento perro') || 
+              {(product.category?.toLowerCase().includes('alimento perro') ||
                 product.category?.toLowerCase().includes('alimento gato') ||
                 product.description?.toLowerCase().includes('alimento perro') ||
                 product.description?.toLowerCase().includes('alimento gato') ||
                 product.name?.toLowerCase().includes('perro') ||
                 product.name?.toLowerCase().includes('gato')) && (
-                <div className="mt-4 pt-4 border-t border-blue-200">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-blue-700 font-medium">Precio sugerido de venta:</span>
+                  <div className="mt-4 pt-4 border-t border-blue-200">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-blue-700 font-medium">Precio sugerido de venta:</span>
+                    </div>
+                    <div className="flex items-baseline space-x-2 mt-1">
+                      <span className="text-2xl font-bold text-green-600">
+                        ${Math.round(product.price * 1.25).toLocaleString()}
+                      </span>
+                      <span className="text-sm text-green-600">(+25%)</span>
+                    </div>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Precio recomendado para venta al público
+                    </p>
                   </div>
-                  <div className="flex items-baseline space-x-2 mt-1">
-                    <span className="text-2xl font-bold text-green-600">
-                      ${Math.round(product.price * 1.25).toLocaleString()}
-                    </span>
-                    <span className="text-sm text-green-600">(+25%)</span>
-                  </div>
-                  <p className="text-xs text-blue-600 mt-1">
-                    Precio recomendado para venta al público
-                  </p>
-                </div>
-              )}
+                )}
             </div>
 
             {/* Descripción */}
@@ -241,11 +239,10 @@ const ProductDetailPage = () => {
                 <button
                   onClick={handleAddToCart}
                   disabled={isAddingToCart}
-                  className={`w-full py-4 px-6 rounded-xl font-semibold transition-colors flex items-center justify-center space-x-2 ${
-                    !isAddingToCart
+                  className={`w-full py-4 px-6 rounded-xl font-semibold transition-colors flex items-center justify-center space-x-2 ${!isAddingToCart
                       ? 'bg-orange-600 text-white hover:bg-orange-700'
                       : 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                  }`}
+                    }`}
                 >
                   {isAddingToCart ? (
                     <>

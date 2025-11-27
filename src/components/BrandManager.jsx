@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { getAllBrands, saveBrand, updateBrand, deleteBrand, saveBrandsConfig } from '../services/brandsService'
 import { populateInitialBrands } from '../utils/populateBrands'
 import { replaceConfigFile, showConfigContent, applyConfigChanges } from '../utils/configFileManager'
-import { ref, uploadString } from 'firebase/storage'
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage } from '../config/firebase'
 
 const BrandManager = () => {
@@ -17,6 +17,9 @@ const BrandManager = () => {
     description: '',
     category: 'veterinarios' // veterinarios o petshops
   })
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [logoPreview, setLogoPreview] = useState(null)
+  const [logoFile, setLogoFile] = useState(null)
 
   useEffect(() => {
     loadBrands()
@@ -36,7 +39,13 @@ const BrandManager = () => {
 
   const handleAddBrand = async () => {
     try {
-      await saveBrand(newBrand)
+      // Si hay un archivo de logo, subirlo primero
+      let logoUrl = newBrand.logo
+      if (logoFile) {
+        logoUrl = await uploadLogoToStorage(logoFile, newBrand.name)
+      }
+      
+      await saveBrand({ ...newBrand, logo: logoUrl })
       await loadBrands()
       setNewBrand({
         name: '',
@@ -45,19 +54,31 @@ const BrandManager = () => {
         description: '',
         category: 'veterinarios'
       })
+      setLogoPreview(null)
+      setLogoFile(null)
       setShowAddForm(false)
     } catch (error) {
       console.error('Error al agregar marca:', error)
+      alert('❌ Error al agregar marca: ' + error.message)
     }
   }
 
   const handleUpdateBrand = async () => {
     try {
-      await updateBrand(editingBrand.id, editingBrand)
+      // Si hay un archivo de logo nuevo, subirlo primero
+      let logoUrl = editingBrand.logo
+      if (logoFile) {
+        logoUrl = await uploadLogoToStorage(logoFile, editingBrand.name)
+      }
+      
+      await updateBrand(editingBrand.id, { ...editingBrand, logo: logoUrl })
       await loadBrands()
       setEditingBrand(null)
+      setLogoPreview(null)
+      setLogoFile(null)
     } catch (error) {
       console.error('Error al actualizar marca:', error)
+      alert('❌ Error al actualizar marca: ' + error.message)
     }
   }
 
@@ -148,6 +169,83 @@ const BrandManager = () => {
       console.error('Error al generar configuración:', error)
       alert('❌ Error al generar configuración: ' + error.message)
     }
+  }
+
+  // Función para subir logo a Firebase Storage
+  const uploadLogoToStorage = async (file, brandName) => {
+    try {
+      setUploadingLogo(true)
+      
+      // Validar tipo de archivo
+      if (!file.type.startsWith('image/')) {
+        throw new Error('El archivo debe ser una imagen')
+      }
+      
+      // Validar tamaño (máximo 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        throw new Error('La imagen no debe superar los 2MB')
+      }
+      
+      // Crear nombre único para el archivo
+      const timestamp = Date.now()
+      const sanitizedName = brandName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()
+      const fileExtension = file.name.split('.').pop()
+      const fileName = `brands/${sanitizedName}_${timestamp}.${fileExtension}`
+      
+      // Crear referencia en Storage
+      const storageRef = ref(storage, fileName)
+      
+      // Subir archivo
+      await uploadBytes(storageRef, file)
+      
+      // Obtener URL de descarga
+      const downloadURL = await getDownloadURL(storageRef)
+      
+      console.log('✅ Logo subido exitosamente:', downloadURL)
+      return downloadURL
+      
+    } catch (error) {
+      console.error('❌ Error subiendo logo:', error)
+      throw error
+    } finally {
+      setUploadingLogo(false)
+    }
+  }
+
+  // Manejar selección de archivo
+  const handleLogoFileChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    
+    // Validar tipo
+    if (!file.type.startsWith('image/')) {
+      alert('❌ El archivo debe ser una imagen (JPG, PNG, etc.)')
+      return
+    }
+    
+    // Validar tamaño
+    if (file.size > 2 * 1024 * 1024) {
+      alert('❌ La imagen no debe superar los 2MB')
+      return
+    }
+    
+    setLogoFile(file)
+    
+    // Crear preview
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setLogoPreview(reader.result)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  // Limpiar preview y archivo
+  const clearLogoSelection = () => {
+    setLogoFile(null)
+    setLogoPreview(null)
+    // Resetear input file
+    const fileInput = document.getElementById('logo-file-input')
+    if (fileInput) fileInput.value = ''
   }
 
   const showConfigModal = () => {
@@ -253,21 +351,91 @@ const BrandManager = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                URL del Logo
+                Logo de la Marca
               </label>
-              <input
-                type="url"
-                value={editingBrand ? editingBrand.logo : newBrand.logo}
-                onChange={(e) => {
-                  if (editingBrand) {
-                    setEditingBrand({ ...editingBrand, logo: e.target.value })
-                  } else {
-                    setNewBrand({ ...newBrand, logo: e.target.value })
-                  }
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="https://ejemplo.com/logo.png"
-              />
+              
+              {/* Opción 1: Subir archivo */}
+              <div className="mb-3">
+                <label className="block text-xs text-gray-600 mb-1">
+                  Subir logo desde tu computadora:
+                </label>
+                <input
+                  id="logo-file-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoFileChange}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  disabled={uploadingLogo}
+                />
+                {logoFile && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-xs text-gray-600">{logoFile.name}</span>
+                    <button
+                      type="button"
+                      onClick={clearLogoSelection}
+                      className="text-xs text-red-600 hover:text-red-800"
+                    >
+                      ✕ Eliminar
+                    </button>
+                  </div>
+                )}
+                {uploadingLogo && (
+                  <div className="mt-2 text-xs text-blue-600">
+                    ⏳ Subiendo logo...
+                  </div>
+                )}
+              </div>
+              
+              {/* Preview del logo */}
+              {(logoPreview || (editingBrand ? editingBrand.logo : newBrand.logo)) && (
+                <div className="mb-3">
+                  <label className="block text-xs text-gray-600 mb-1">
+                    Vista previa:
+                  </label>
+                  <div className="w-32 h-16 bg-white border border-gray-300 rounded-md flex items-center justify-center p-2">
+                    <img
+                      src={logoPreview || (editingBrand ? editingBrand.logo : newBrand.logo)}
+                      alt="Preview"
+                      className="max-w-full max-h-full object-contain"
+                      onError={(e) => {
+                        e.target.style.display = 'none'
+                        e.target.nextSibling.style.display = 'flex'
+                      }}
+                    />
+                    <div className="hidden items-center justify-center text-gray-400 text-xs">
+                      Imagen no disponible
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Opción 2: URL manual (alternativa) */}
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">
+                  O ingresar URL manualmente:
+                </label>
+                <input
+                  type="url"
+                  value={editingBrand ? editingBrand.logo : newBrand.logo}
+                  onChange={(e) => {
+                    if (editingBrand) {
+                      setEditingBrand({ ...editingBrand, logo: e.target.value })
+                    } else {
+                      setNewBrand({ ...newBrand, logo: e.target.value })
+                    }
+                    // Si se ingresa URL manual, limpiar archivo seleccionado
+                    if (e.target.value) {
+                      clearLogoSelection()
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  placeholder="https://ejemplo.com/logo.png (opcional si subes archivo)"
+                  disabled={!!logoFile}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  💡 Si subes un archivo, se usará ese logo. La URL solo se usa si no hay archivo.
+                </p>
+              </div>
             </div>
 
             <div>
@@ -334,6 +502,7 @@ const BrandManager = () => {
               onClick={() => {
                 setShowAddForm(false)
                 setEditingBrand(null)
+                clearLogoSelection()
               }}
               className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
             >
@@ -341,9 +510,10 @@ const BrandManager = () => {
             </button>
             <button
               onClick={editingBrand ? handleUpdateBrand : handleAddBrand}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              disabled={uploadingLogo}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium transition-colors"
             >
-              {editingBrand ? 'Actualizar' : 'Agregar'}
+              {uploadingLogo ? '⏳ Subiendo...' : (editingBrand ? 'Actualizar' : 'Agregar')}
             </button>
           </div>
         </div>
@@ -357,7 +527,11 @@ const BrandManager = () => {
               <h4 className="font-semibold text-gray-900">{brand.name}</h4>
               <div className="flex gap-1">
                 <button
-                  onClick={() => setEditingBrand(brand)}
+                  onClick={() => {
+                    setEditingBrand(brand)
+                    setLogoPreview(null)
+                    setLogoFile(null)
+                  }}
                   className="text-blue-600 hover:text-blue-800 text-sm"
                 >
                   Editar

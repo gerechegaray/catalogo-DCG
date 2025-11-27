@@ -28,34 +28,37 @@ const ProductCardWithCart = ({ product }) => {
   }
 
   // Manejar click en "Ver Producto"
-  const handleViewProduct = () => {
+  const handleViewProduct = (e) => {
+    // Si viene de un evento, prevenir default si es necesario, aunque Link lo maneja
     console.log('🔍 Debug handleViewProduct (WithCart):', {
       productId: product.id,
       productName: product.name,
-      product: product
+      product: product,
+      url: getProductUrl()
     })
-    
+
     if (!product.id) {
       console.error('❌ Error: product.id es undefined', product)
       return
     }
-    
+
     recordViewProductClick(product.id, product.name || `Producto ${product.id}`)
     const productUrl = getProductUrl()
+    console.log('🚀 Navigating to:', productUrl)
     navigate(productUrl)
   }
 
   // Manejar agregar al carrito
   const handleAddToCart = async () => {
     if (isAddingToCart) return
-    
+
     setIsAddingToCart(true)
-    
+
     // Agregar la cantidad especificada
     for (let i = 0; i < quantity; i++) {
       addToCart(product)
     }
-    
+
     // Resetear cantidad después de agregar
     setTimeout(() => {
       setIsAddingToCart(false)
@@ -77,11 +80,11 @@ const ProductCardWithCart = ({ product }) => {
       const numericPrice = parseFloat(price.replace(/[^\d.-]/g, ''))
       return isNaN(numericPrice) ? '$0' : `$${numericPrice.toLocaleString('es-CO')}`
     }
-    
+
     if (typeof price === 'number') {
       return `$${price.toLocaleString('es-CO')}`
     }
-    
+
     return '$0'
   }
 
@@ -90,31 +93,31 @@ const ProductCardWithCart = ({ product }) => {
       {/* Imagen del producto - Enlace a detalle */}
       <Link to={getProductUrl()} onClick={handleProductView}>
         <div className="w-full h-48 bg-gray-100 rounded-lg mb-4 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative group">
-        {product.image ? (
-          <>
-            <img 
-              src={product.image} 
-              alt={product.name}
-              className="w-full h-full object-contain p-2"
-              onError={(e) => {
-                e.target.style.display = 'none'
-                e.target.nextSibling.style.display = 'flex'
-              }}
-            />
-            {/* Overlay con ícono de información */}
-            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+          {product.image ? (
+            <>
+              <img
+                src={product.image}
+                alt={product.name}
+                className="w-full h-full object-contain p-2"
+                onError={(e) => {
+                  e.target.style.display = 'none'
+                  e.target.nextSibling.style.display = 'flex'
+                }}
+              />
+              {/* Overlay con ícono de información */}
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="text-6xl text-gray-400">
+              📦
             </div>
-            </div>
-          </>
-        ) : (
-          <div className="text-6xl text-gray-400">
-            📦
-          </div>
-        )}
+          )}
         </div>
       </Link>
 
@@ -135,9 +138,8 @@ const ProductCardWithCart = ({ product }) => {
         {/* Stock - Sí/No */}
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-500">Stock:</span>
-          <span className={`text-sm font-medium ${
-            product.stock > 0 ? 'text-green-600' : 'text-red-600'
-          }`}>
+          <span className={`text-sm font-medium ${product.stock > 0 ? 'text-green-600' : 'text-red-600'
+            }`}>
             {product.stock > 0 ? 'Sí' : 'No'}
           </span>
         </div>
@@ -183,11 +185,10 @@ const ProductCardWithCart = ({ product }) => {
           <button
             onClick={handleAddToCart}
             disabled={product.stock <= 0 || isAddingToCart}
-            className={`w-full py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 ${
-              product.stock > 0 && !isAddingToCart
+            className={`w-full py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 ${product.stock > 0 && !isAddingToCart
                 ? 'bg-orange-600 text-white hover:bg-orange-700'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
+              }`}
           >
             {isAddingToCart ? (
               <>
@@ -206,11 +207,10 @@ const ProductCardWithCart = ({ product }) => {
           <button
             onClick={handleViewProduct}
             disabled={product.stock <= 0}
-            className={`w-full py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 ${
-              product.stock > 0
+            className={`w-full py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 ${product.stock > 0
                 ? 'bg-blue-600 text-white hover:bg-blue-700'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
+              }`}
           >
             <Eye className="w-4 h-4" />
             <span>{product.stock > 0 ? 'Ver Producto' : 'Sin Stock'}</span>
@@ -220,13 +220,13 @@ const ProductCardWithCart = ({ product }) => {
 
       {/* Modal para imagen expandida */}
       {showImageModal && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
           onClick={() => setShowImageModal(false)}
         >
           <div className="relative max-w-4xl max-h-full">
-            <img 
-              src={product.image} 
+            <img
+              src={product.image}
               alt={product.name}
               className="max-w-full max-h-full object-contain rounded-lg"
             />
@@ -247,9 +247,8 @@ const ProductCardWithCart = ({ product }) => {
               )}
               <div className="flex items-center justify-between mt-2">
                 <span className="text-lg font-bold text-blue-600">{formatPrice(product.price)}</span>
-                <span className={`text-sm font-medium ${
-                  product.stock > 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
+                <span className={`text-sm font-medium ${product.stock > 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
                   Stock: {product.stock > 0 ? 'Sí' : 'No'}
                 </span>
               </div>
