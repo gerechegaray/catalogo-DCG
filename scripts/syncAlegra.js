@@ -108,35 +108,54 @@ async function updateCatalog() {
     allProducts.forEach(product => {
       if (product.status !== 'active') return;
       
-      const isForPetShops = product.price?.some(price => 
+      const hasPetPrice = product.price?.some(price => 
         price.name && price.name.toLowerCase().includes('pet')
       );
       
-      const cleanProduct = {
-        id: product.id.toString(),
-        name: product.name,
-        description: product.description || '',
-        price: extractPrice(product.price, isForPetShops ? 'pet' : 'vet'),
-        stock: product.inventory?.availableQuantity || 0,
-        category: product.description || '',
-        subcategory: product.itemCategory?.name || '',
-        supplier: product.description || '',
-        userType: isForPetShops ? 'both' : 'vet',
-        image: product.images?.[0]?.url || '',
-        code: product.reference || '',
-        unit: product.inventory?.unit || 'unidad',
-        status: product.status
-      };
+      // Catálogo Veterinarios (USA PRECIO GENERAL)
+      const vetPrice = extractPrice(product.price, 'vet');
+      if (vetPrice > 0) {
+        veterinarianProducts.push({
+          id: product.id.toString(),
+          name: product.name,
+          description: product.description || '',
+          price: vetPrice,
+          stock: product.inventory?.availableQuantity || 0,
+          category: product.description || '',
+          subcategory: product.itemCategory?.name || '',
+          supplier: product.description || '',
+          userType: hasPetPrice ? 'both' : 'vet',
+          image: product.images?.[0]?.url || '',
+          code: product.reference || '',
+          unit: product.inventory?.unit || 'unidad',
+          status: product.status
+        });
+      }
       
-      veterinarianProducts.push(cleanProduct);
-      
-      if (isForPetShops) {
-        const petProduct = { ...cleanProduct, price: extractPrice(product.price, 'pet'), userType: 'pet' };
-        petShopProducts.push(petProduct);
+      // Catálogo Pet Shops (USA PRECIO PET)
+      if (hasPetPrice) {
+        const petPrice = extractPrice(product.price, 'pet');
+        if (petPrice > 0) {
+          petShopProducts.push({
+            id: product.id.toString(),
+            name: product.name,
+            description: product.description || '',
+            price: petPrice,
+            stock: product.inventory?.availableQuantity || 0,
+            category: product.description || '',
+            subcategory: product.itemCategory?.name || '',
+            supplier: product.description || '',
+            userType: 'pet',
+            image: product.images?.[0]?.url || '',
+            code: product.reference || '',
+            unit: product.inventory?.unit || 'unidad',
+            status: product.status
+          });
+        }
       }
     });
-    
-    console.log(`📦 Vet: ${veterinarianProducts.length} | 🐾 Pet: ${petShopProducts.length}`);
+
+    console.log(`📦 Sincronización completa. Vet: ${veterinarianProducts.length} | 🐾 Pet: ${petShopProducts.length}`);
     
     // Crear la carpeta contenedora si no existe
     if (!fs.existsSync(PUBLIC_DIR)) {

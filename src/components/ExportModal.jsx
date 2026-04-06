@@ -40,15 +40,10 @@ const ExportModal = ({ isOpen, onClose }) => {
       filtered = filtered.filter(p => selectedFilters.subcategories.includes(p.subcategory))
     }
 
-    // Filtros adicionales: excluir productos sin precio o sin stock
+    // Filtros adicionales: excluir productos sin precio
     filtered = filtered.filter(product => {
       // Excluir productos con precio = 0 o sin precio
       if (!product.price || product.price === 0) {
-        return false
-      }
-      
-      // Excluir productos sin stock (stock = 0 o undefined)
-      if (!product.stock || product.stock === 0) {
         return false
       }
       
