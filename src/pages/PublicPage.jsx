@@ -13,8 +13,8 @@ const PublicPage = () => {
     const loadProducts = async () => {
       try {
         setLoading(true)
-        // Cargar productos desde cache
-        const cachedProducts = await cacheService.getProductsFromCache()
+        // Cargar catálogo PET específicamente (no depende de la URL)
+        const cachedProducts = await cacheService.getProductsHybrid('pet')
         
         // Filtrar SOLO productos que tengan lista de precio "pet"
         const petProducts = cachedProducts.filter(product => {
