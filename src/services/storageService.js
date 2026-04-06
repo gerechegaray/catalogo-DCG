@@ -41,17 +41,23 @@ class StorageService {
         return this.memoryCache[cacheKey]
       }
       
-      console.log(`📥 Descargando catálogo ${userType} desde Storage...`)
+      console.log(`📥 Descargando catálogo ${userType} desde url directa...`)
       
-      // Crear referencia al archivo
-      const fileRef = ref(storage, filePath)
+      // Construir la URL pública de Storage (saltamos el SDK para evitar error 412/CORS bugs)
+      const bucketUrl = "https://firebasestorage.googleapis.com/v0/b/catalogo-veterinaria-alegra.firebasestorage.app/o/catalog%2F";
+      const fileName = userType === 'pet' ? 'petshops.json' : 'veterinarios.json';
+      const url = `${bucketUrl}${fileName}?alt=media`;
       
-      // Usar getBytes() para evitar problemas de CORS con fetch()
-      const bytes = await getBytes(fileRef)
+      // Añadir timestamp para evitar cache extrema
+      const fetchUrl = `${url}&t=${Date.now()}`;
       
-      // Convertir bytes a texto y luego a JSON
-      const text = new TextDecoder().decode(bytes)
-      const products = JSON.parse(text)
+      const response = await fetch(fetchUrl);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status} fetching ${fileName}`);
+      }
+      
+      const products = await response.json();
       
       console.log(`✅ Catálogo ${userType} descargado: ${products.length} productos`)
       
