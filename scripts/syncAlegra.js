@@ -50,12 +50,24 @@ async function updateCatalog() {
   try {
     console.log('🔄 Iniciando extracción de catálogo desde Alegra vía GitHub Actions...');
     
-    if (!ALEGRA_API_KEY) {
-      throw new Error('ALEGRA_API_KEY no está configurada en las variables de entorno.');
+    let authHeader = '';
+    // Si ya empieza con "Basic ", lo usamos tal cual
+    if (ALEGRA_API_KEY.startsWith('Basic ')) {
+      authHeader = ALEGRA_API_KEY;
+    } 
+    // Si no tiene arroba ni dos puntos, asumimos que es el base64 directo
+    else if (!ALEGRA_API_KEY.includes('@') && !ALEGRA_API_KEY.includes(':') && ALEGRA_API_KEY.length > 20) {
+      authHeader = `Basic ${ALEGRA_API_KEY}`;
+    } 
+    // Si contiene el formato crudo email:token
+    else {
+      // Remover colon al final si lo tiene agregado por error
+      const rawKey = ALEGRA_API_KEY.replace(/:$/, '');
+      authHeader = `Basic ${Buffer.from(rawKey).toString('base64')}`;
     }
     
     const headers = {
-      'Authorization': `Basic ${Buffer.from(`${ALEGRA_API_KEY}:`).toString('base64')}`,
+      'Authorization': authHeader,
       'Content-Type': 'application/json'
     };
     
