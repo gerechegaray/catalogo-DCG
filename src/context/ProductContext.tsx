@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react'
 import { useAuth } from './AuthContext'
-import alegraService from '../services/alegraService'
 import cacheService from '../services/cacheService'
 import type { 
   ProductContextType, 
@@ -174,14 +173,15 @@ const ProductContext = createContext<ProductContextType | undefined>(undefined)
 export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(productReducer, initialState)
   const { getFilteredProducts, userType } = useAuth()
+  
+  // Determinar el contexto local basado en la URL
+  const effectiveUserType = window.location.pathname.startsWith('/petshops') ? 'pet' : 'vet';
 
   // Cargar productos al inicializar
   useEffect(() => {
-    // No cargar si es 'public' - solo cargar para vet, pet o admin
-    if (userType && userType !== 'public') {
-      loadProducts()
-    }
-  }, [userType])
+    // Para simplificar y hacerlo compartible púdicamente, cargamos usando el effectiveUserType
+    loadProducts(effectiveUserType)
+  }, [effectiveUserType])
 
   // Aplicar filtros cuando cambien
   useEffect(() => {
@@ -262,30 +262,26 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
   }
 
   // Cargar productos desde cache o Alegra
-  const loadProducts = useCallback(async (): Promise<void> => {
+  const loadProducts = useCallback(async (currentType: string | undefined): Promise<void> => {
     try {
       dispatch({ type: actionTypes.SET_LOADING, payload: true })
       
       // NUEVO: Usar el método híbrido que intenta Storage primero
       // Este método intenta descargar desde Firebase Storage (más eficiente)
       // y si falla, usa Firestore como fallback (para retrocompatibilidad)
-      const products = await cacheService.getProductsHybrid(userType)
+      const products = await cacheService.getProductsHybrid(currentType)
       
       if (products && products.length > 0) {
         // Productos obtenidos exitosamente desde Storage o Firestore
         dispatch({ type: actionTypes.SET_PRODUCTS, payload: products })
         dispatch({ type: actionTypes.SET_CACHE_STATUS, payload: 'valid' })
       } else {
-        // Si no hay productos en cache, obtener desde Alegra API
-        console.log('🔄 No hay cache disponible, sincronizando con Alegra...')
-        const alegraProducts = await alegraService.getAllProducts()
-        
-        // Guardar en cache de Firestore (compatibilidad temporal)
-        // NOTA: Ya no guardaremos en Firestore en producción cuando la Cloud Function esté activa
-        await cacheService.saveProductsToCache(alegraProducts)
-        
-        dispatch({ type: actionTypes.SET_PRODUCTS, payload: alegraProducts })
-        dispatch({ type: actionTypes.SET_CACHE_STATUS, payload: 'valid' })
+        // Ya no consultamos directamente a Alegra desde el cliente por optimización de performance.
+        // Todo depende de la Cloud Function / Script que genera los JSON en Storage.
+        console.warn('⚠️ No se encontraron catálogos en Storage/Firestore. Debe ejecutarse el script en el backend.')
+        dispatch({ type: actionTypes.SET_PRODUCTS, payload: [] }) // Catálogo vacío temporal
+        dispatch({ type: actionTypes.SET_ERROR, payload: 'El catálogo se está actualizando o no está disponible. Por favor, intenta en unos minutos.' })
+        dispatch({ type: actionTypes.SET_CACHE_STATUS, payload: 'error' })
       }
       
     } catch (error: any) {
@@ -376,8 +372,8 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
   }, [])
   
   const reloadProducts = useCallback((): void => {
-    loadProducts()
-  }, [loadProducts])
+    loadProducts(effectiveUserType)
+  }, [loadProducts, effectiveUserType])
   
   const loadAnalytics = useCallback(async (): Promise<void> => {
     try {

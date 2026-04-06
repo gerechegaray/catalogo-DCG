@@ -141,14 +141,7 @@ const DynamicNavbar = () => {
                 CONTACTO
               </Link>
               
-              <Link 
-                to="/client/login" 
-                onClick={() => handleNavbarClick('PORTAL CLIENTE')}
-                className={`${colors.hover} px-4 py-3 rounded-xl transition-all duration-300 font-semibold hover:scale-105 whitespace-nowrap`}
-              >
-                PORTAL CLIENTE
-              </Link>
-              
+
               {isPetShops && (
                 <button
                   onClick={(e) => {
@@ -218,14 +211,7 @@ const DynamicNavbar = () => {
                     CONTACTO
                   </Link>
                   
-                  <Link 
-                    to="/client/login" 
-                    onClick={() => handleNavbarClick('PORTAL CLIENTE')}
-                    className={`${colors.hover} px-2 py-2 rounded-lg transition-all duration-300 font-semibold text-xs`}
-                  >
-                    CLIENTE
-                  </Link>
-                  
+
                   {isPetShops && (
                     <button
                       onClick={(e) => {

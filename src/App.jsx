@@ -62,7 +62,7 @@ function App() {
               
               {/* Páginas de presentación */}
               <Route path="/veterinarios" element={
-                <ProtectedRoute requireAuth={true}>
+                <ProtectedRoute requireAuth={false}>
                   <CartProvider>
                     <PageTracker>
                       <div>
@@ -78,7 +78,7 @@ function App() {
               } />
               
               <Route path="/petshops" element={
-                <ProtectedRoute requireAuth={true}>
+                <ProtectedRoute requireAuth={false}>
                   <CartProvider>
                     <PageTracker>
                       <div>
@@ -95,7 +95,7 @@ function App() {
               
               {/* Páginas de productos */}
               <Route path="/veterinarios/productos" element={
-                <ProtectedRoute requireAuth={true}>
+                <ProtectedRoute requireAuth={false}>
                   <CartProvider>
                     <PageTracker>
                       <div>
@@ -111,7 +111,7 @@ function App() {
               } />
             
             <Route path="/petshops/productos" element={
-              <ProtectedRoute requireAuth={true}>
+              <ProtectedRoute requireAuth={false}>
                 <CartProvider>
                   <PageTracker>
                     <div>
@@ -128,7 +128,7 @@ function App() {
             
             {/* Páginas de detalle de producto */}
             <Route path="/veterinarios/productos/:productId" element={
-              <ProtectedRoute requireAuth={true}>
+              <ProtectedRoute requireAuth={false}>
                 <CartProvider>
                   <PageTracker>
                     <div>
@@ -144,7 +144,7 @@ function App() {
             } />
             
             <Route path="/petshops/productos/:productId" element={
-              <ProtectedRoute requireAuth={true}>
+              <ProtectedRoute requireAuth={false}>
                 <CartProvider>
                   <PageTracker>
                     <div>

@@ -227,3 +227,5 @@ Los estilos están en `src/components/Toast.tsx` y usan Tailwind CSS. Puedes per
 - [React Error Boundaries](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)
 - [Error Handling Best Practices](https://kentcdodds.com/blog/get-a-catch-block-error-message)
 
+
+
