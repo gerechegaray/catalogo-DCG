@@ -2,54 +2,36 @@ import React, { useState, useEffect } from 'react'
 import { 
   getAllCommunications, 
   addCommunication, 
-  updateCommunication, 
   deleteCommunication, 
   toggleCommunicationStatus 
 } from '../services/communicationsService'
-import clientManagementService from '../services/clientManagementService'
 
 const CommunicationsManager = () => {
   const [communications, setCommunications] = useState([])
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
-  const [editingComm, setEditingComm] = useState(null)
 
-  const [newComm, setNewComm] = useState({
+  const initialFormState = {
     title: '',
     subtitle: '',
-    type: 'producto-nuevo',
-    communicationType: 'anuncio', // 'anuncio', 'promocion', 'descuento-exclusivo'
     description: '',
     image: '',
-    buttonText: 'Ver Más',
+    buttonText: 'Ver Productos',
     buttonLink: '',
     badge: 'NUEVO',
     section: 'veterinarios',
-    targetClients: [],
-    discountPercent: '',
+    active: true,
+    // defaults needed for the database structure
+    type: 'comunicado-general',
     validFrom: new Date().toISOString().split('T')[0],
-    validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 30 días desde hoy
-  })
-  
-  // Estados para el selector de clientes
-  const [allClients, setAllClients] = useState([])
-  const [clientSearch, setClientSearch] = useState('')
+    validUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  }
 
-  // Cargar comunicados al montar el componente
+  const [newComm, setNewComm] = useState(initialFormState)
+
   useEffect(() => {
     loadCommunications()
-    loadClients()
   }, [])
-  
-  // Función para cargar clientes activos
-  const loadClients = async () => {
-    try {
-      const clients = await clientManagementService.getActiveClients()
-      setAllClients(clients)
-    } catch (error) {
-      console.error('Error cargando clientes:', error)
-    }
-  }
 
   const loadCommunications = async () => {
     try {
@@ -57,196 +39,46 @@ const CommunicationsManager = () => {
       const comms = await getAllCommunications()
       setCommunications(comms)
     } catch (error) {
-      console.error('Error al cargar comunicados:', error)
-      alert('Error al cargar comunicados: ' + error.message)
+      console.error('Error al cargar comunicaciones:', error)
     } finally {
       setLoading(false)
     }
   }
 
   const handleAddCommunication = async () => {
-    if (!newComm.title) {
-      alert('❌ Por favor completa el título')
+    if (!newComm.title || !newComm.image) {
+      alert('Por favor agrega un Título y una URL de Imagen')
       return
     }
 
     try {
       await addCommunication(newComm)
-      await loadCommunications() // Recargar la lista
-      setNewComm({
-        title: '',
-        subtitle: '',
-        type: 'producto-nuevo',
-        communicationType: 'anuncio',
-        description: '',
-        image: '',
-        buttonText: 'Ver Más',
-        buttonLink: '',
-        badge: 'NUEVO',
-        section: 'veterinarios',
-        targetClients: [],
-        discountPercent: '',
-        validFrom: new Date().toISOString().split('T')[0],
-        validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-      })
-      setClientSearch('')
+      await loadCommunications()
+      setNewComm(initialFormState)
       setShowAddForm(false)
-      alert('✅ Comunicado agregado exitosamente')
     } catch (error) {
-      console.error('Error al agregar comunicado:', error)
-      alert('❌ Error al agregar comunicado: ' + error.message)
+      alert('Error al guardar: ' + error.message)
     }
   }
 
   const handleToggleActive = async (id, currentActive) => {
     try {
       await toggleCommunicationStatus(id, !currentActive)
-      await loadCommunications() // Recargar la lista
-      alert(`✅ Comunicado ${!currentActive ? 'activado' : 'desactivado'} exitosamente`)
+      await loadCommunications()
     } catch (error) {
       console.error('Error al cambiar estado:', error)
-      alert('❌ Error al cambiar estado: ' + error.message)
     }
   }
 
   const handleDelete = async (id) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar este comunicado?')) {
+    if (window.confirm('¿Eliminar este banner permanentemente?')) {
       try {
         await deleteCommunication(id)
-        await loadCommunications() // Recargar la lista
-        alert('🗑️ Comunicado eliminado exitosamente')
+        await loadCommunications()
       } catch (error) {
-        console.error('Error al eliminar comunicado:', error)
-        alert('❌ Error al eliminar comunicado: ' + error.message)
+        console.error('Error al eliminar:', error)
       }
     }
-  }
-
-  const handlePopulateExamples = async () => {
-    if (window.confirm('¿Quieres agregar comunicados de ejemplo? Esto agregará 4 comunicados de prueba.')) {
-      try {
-        const exampleCommunications = [
-          {
-            title: "NUEVO PRODUCTO ELMER",
-            subtitle: "MEDICAMENTOS CONDUCTUALES",
-            type: "producto-nuevo",
-            description: "Descubre la nueva línea de productos para el manejo del comportamiento animal",
-            image: "https://drive.google.com/uc?export=view&id=1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
-            buttonText: "Ver Productos",
-            buttonLink: "/veterinarios/productos",
-            badge: "NUEVO",
-            section: "veterinarios",
-            validFrom: "2024-01-01",
-            validUntil: "2025-12-31",
-            active: true
-          },
-          {
-            title: "AUMENTO PRECIOS VACUNAS",
-            subtitle: "VIGENTE DESDE 15/01",
-            type: "aumento-precios",
-            description: "Informamos los nuevos precios de la línea de vacunas e inmunológicos",
-            image: "https://drive.google.com/uc?export=view&id=1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
-            buttonText: "Ver Precios",
-            buttonLink: "/veterinarios/productos",
-            badge: "IMPORTANTE",
-            section: "veterinarios",
-            validFrom: "2024-01-15",
-            validUntil: "2025-12-31",
-            active: true
-          },
-          {
-            title: "ALIMENTOS PREMIUM",
-            subtitle: "OLD PRINCE & COMPANY",
-            type: "producto-nuevo",
-            description: "Nueva llegada de alimentos premium para perros y gatos",
-            image: "https://drive.google.com/uc?export=view&id=1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
-            buttonText: "Ver Alimentos",
-            buttonLink: "/petshops/productos",
-            badge: "NUEVO",
-            section: "petshops",
-            validFrom: "2024-01-01",
-            validUntil: "2025-12-31",
-            active: true
-          },
-          {
-            title: "PROMOCIÓN ESPECIAL",
-            subtitle: "DESCUENTOS EN ACCESORIOS",
-            type: "promocion",
-            description: "Aprovecha nuestros descuentos especiales en juguetes y accesorios para mascotas",
-            image: "https://drive.google.com/uc?export=view&id=1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
-            buttonText: "Ver Ofertas",
-            buttonLink: "/petshops/productos",
-            badge: "PROMO",
-            section: "petshops",
-            validFrom: "2024-01-01",
-            validUntil: "2025-12-31",
-            active: true
-          }
-        ]
-        
-        for (const comm of exampleCommunications) {
-          await addCommunication(comm)
-        }
-        
-        await loadCommunications() // Recargar la lista
-        alert('🎉 Comunicados de ejemplo agregados exitosamente!')
-      } catch (error) {
-        console.error('Error al poblar comunicados:', error)
-        alert('❌ Error al agregar comunicados de ejemplo: ' + error.message)
-      }
-    }
-  }
-
-  const handleUpdateExpiredDates = async () => {
-    if (window.confirm('¿Quieres actualizar las fechas de los comunicados existentes para que sean válidas?')) {
-      try {
-        const today = new Date().toISOString().split('T')[0]
-        const nextYear = new Date().getFullYear() + 1
-        
-        for (const comm of communications) {
-          // Actualizar fechas que ya expiraron
-          if (comm.validUntil < today) {
-            await updateCommunication(comm.id, {
-              validFrom: today,
-              validUntil: `${nextYear}-12-31`
-            })
-            // console.log(`✅ Actualizado: ${comm.title}`)
-          }
-        }
-        
-        await loadCommunications() // Recargar la lista
-        alert('🎉 Fechas actualizadas exitosamente!')
-      } catch (error) {
-        console.error('Error al actualizar fechas:', error)
-        alert('❌ Error al actualizar fechas: ' + error.message)
-      }
-    }
-  }
-
-  // Funciones para manejar selección de clientes
-  const handleToggleClient = (clientId) => {
-    const currentTargets = newComm.targetClients || []
-    if (currentTargets.includes(clientId)) {
-      setNewComm({
-        ...newComm,
-        targetClients: currentTargets.filter(id => id !== clientId)
-      })
-    } else {
-      setNewComm({
-        ...newComm,
-        targetClients: [...currentTargets, clientId]
-      })
-    }
-  }
-
-  const getFilteredClients = () => {
-    if (!clientSearch) return allClients
-    const searchLower = clientSearch.toLowerCase()
-    return allClients.filter(client => 
-      client.displayName?.toLowerCase().includes(searchLower) ||
-      client.businessName?.toLowerCase().includes(searchLower) ||
-      client.email?.toLowerCase().includes(searchLower)
-    )
   }
 
   const getBadgeColor = (badge) => {
@@ -259,444 +91,183 @@ const CommunicationsManager = () => {
     }
   }
 
-  const getTypeIcon = (type) => {
-    switch (type) {
-      case 'producto-nuevo': return '🆕'
-      case 'aumento-precios': return '💰'
-      case 'promocion': return '🎉'
-      case 'aviso-importante': return '⚠️'
-      default: return '📢'
-    }
-  }
-
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Gestión de Comunicados</h2>
-        <p className="text-gray-600">Administra los comunicados que aparecen en el carousel de cada sección</p>
-      </div>
-
-      {/* Botones de acción */}
-      <div className="mb-6 flex flex-wrap gap-4">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Avisos y Banners Principales</h2>
+          <p className="text-gray-500 mt-1">Configura las promociones que aparecen al inicio de cada catálogo.</p>
+        </div>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2"
         >
-          ➕ Agregar Nuevo Comunicado
-        </button>
-        
-        <button
-          onClick={handlePopulateExamples}
-          className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-        >
-          🎯 Agregar Ejemplos
-        </button>
-        
-        <button
-          onClick={handleUpdateExpiredDates}
-          className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-        >
-          📅 Actualizar Fechas
-        </button>
-        
-        <button
-          onClick={loadCommunications}
-          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-        >
-          🔄 Recargar Lista
+          {showAddForm ? '❌ Cancelar' : '➕ Nuevo Banner'}
         </button>
       </div>
 
-      {/* Formulario para agregar comunicado */}
       {showAddForm && (
-        <div className="bg-white p-6 rounded-lg shadow-lg mb-6">
-          <h3 className="text-xl font-semibold mb-4">Nuevo Comunicado</h3>
+        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-8 animate-fade-in">
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Detalles del Nuevo Banner</h3>
           
-          {/* Paso 1: Seleccionar Tipo */}
-          <div className="mb-6 pb-6 border-b">
-            <label className="block text-sm font-medium text-gray-700 mb-3">🎯 Paso 1: Tipo de Comunicación</label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <label className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                newComm.communicationType === 'anuncio' ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
-              }`}>
-                <input
-                  type="radio"
-                  name="communicationType"
-                  value="anuncio"
-                  checked={newComm.communicationType === 'anuncio'}
-                  onChange={(e) => setNewComm({...newComm, communicationType: e.target.value, targetClients: [], discountPercent: ''})}
-                  className="mr-3"
-                />
-                <div>
-                  <div className="font-semibold">Anuncio Público</div>
-                  <div className="text-xs text-gray-600">Páginas principales</div>
-                </div>
-              </label>
-              
-              <label className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                newComm.communicationType === 'promocion' ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
-              }`}>
-                <input
-                  type="radio"
-                  name="communicationType"
-                  value="promocion"
-                  checked={newComm.communicationType === 'promocion'}
-                  onChange={(e) => setNewComm({...newComm, communicationType: e.target.value, targetClients: []})}
-                  className="mr-3"
-                />
-                <div>
-                  <div className="font-semibold">Promoción</div>
-                  <div className="text-xs text-gray-600">Portal clientes</div>
-                </div>
-              </label>
-              
-              <label className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                newComm.communicationType === 'descuento-exclusivo' ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
-              }`}>
-                <input
-                  type="radio"
-                  name="communicationType"
-                  value="descuento-exclusivo"
-                  checked={newComm.communicationType === 'descuento-exclusivo'}
-                  onChange={(e) => setNewComm({...newComm, communicationType: e.target.value})}
-                  className="mr-3"
-                />
-                <div>
-                  <div className="font-semibold">Descuento Exclusivo</div>
-                  <div className="text-xs text-gray-600">Clientes específicos</div>
-                </div>
-              </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Título Principal *</label>
+              <input
+                type="text"
+                value={newComm.title}
+                onChange={(e) => setNewComm({...newComm, title: e.target.value})}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Ej. NUEVA PROMOCIÓN"
+              />
             </div>
-          </div>
-          
-          {/* Paso 2: Campos Comunes */}
-          <div className="mb-6 pb-6 border-b">
-            <h4 className="جيلات-lg font-semibold mb-4">📝 Información Básicaettes</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Título *</label>
-                <input
-                  type="text"
-                  value={newComm.title}
-                  onChange={(e) => setNewComm({...newComm, title: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ej: NUEVO PRODUCTO ELMER"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Subtítulo</label>
-                <input
-                  type="text"
-                  value={newComm.subtitle}
-                  onChange={(e) => setNewComm({...newComm, subtitle: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ej: MEDICAMENTOS CONDUCTUALES"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
-                <select
-                  value={newComm.type}
-                  onChange={(e) => setNewComm({...newComm, type: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="producto-nuevo">🆕 Producto Nuevo</option>
-                  <option value="aumento-precios">💰 Aumento de Precios</option>
-                  <option value="promocion">🎉 Promoción</option>
-                  <option value="aviso-importante">⚠️ Aviso Importante</option>
-                  <option value="comunicado-general">📢 Comunicado General</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Badge</label>
-                <select
-                  value={newComm.badge}
-                  onChange={(e) => setNewComm({...newComm, badge: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="NUEVO">NUEVO</option>
-                  <option value="IMPORTANTE">IMPORTANTE</option>
-                  <option value="PROMO">PROMO</option>
-                  <option value="OFERTA">OFERTA</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Sección</label>
-                <select
-                  value={newComm.section}
-                  onChange={(e) => setNewComm({...newComm, section: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="veterinarios">Veterinarios</option>
-                  <option value="petshops">Pet Shops</option>
-                  <option value="ambos">Ambas Secciones</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          
-          {/* Campos Específicos por Tipo */}
-          {(newComm.communicationType === 'promocion' || newComm.communicationType === 'descuento-exclusivo') && (
-            <div className="mb-6 pb-6 border-b">
-              <h4 className="text-lg font-semibold mb-4">
-                {newComm.communicationType === 'promocion' ? '🎉 Configuración de Promoción' : '🎁 Descuento Exclusivo'}
-              </h4>
-              
-              {/* Campo de Descuento */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">💰 Porcentaje de Descuento</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={newComm.discountPercent}
-                      onChange={(e) => setNewComm({...newComm, discountPercent: e.target.value})}
-                      className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="15"
-                    />
-                    <span className="text-gray-600">% OFF</span>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Selector de Clientes - Solo para exclusivo */}
-              {newComm.communicationType === 'descuento-exclusivo' && (
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">👥 Seleccionar Clientes</label>
-                  <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
-                    <input
-                      type="text"
-                      value={clientSearch}
-                      onChange={(e) => setClientSearch(e.target.value)}
-                      placeholder="🔍 Buscar..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-4"
-                    />
-                    <div className="max-h-48 overflow-y-auto space-y-2">
-                      {getFilteredClients().map((client) => (
-                        <label key={client.id} className={`flex items-center p-2 rounded-lg cursor-pointer border-2 transition-colors ${
-                          newComm.targetClients?.includes(client.id) ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-                        }`}>
-                          <input
-                            type="checkbox"
-                            checked={newComm.targetClients?.includes(client.id) || false}
-                            onChange={() => handleToggleClient(client.id)}
-                            className="mr-3"
-                          />
-                          <div className="flex-1">
-                            <div className="font-medium text-gray-900">{client.businessName || client.displayName}</div>
-                            <div className="text-xs text-gray-600">{client.type === 'vet' ? 'Veterinario' : 'Pet Shop'}</div>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                    <div className="mt-3 text-sm text-gray-600 font-medium">
-                      {newComm.targetClients?.length || 0} cliente(s) seleccionado(s)
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Campos Opcionales */}
-          <div className="mb-6 pb-6 border-b">
-            <h4 className="text-lg font-semibold mb-4">🎨 Imagen y Acciones</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">URL de Imagen</label>
-                <input
-                  type="url"
-                  value={newComm.image}
-                  onChange={(e) => setNewComm({...newComm, image: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="https://drive.google.com/uc?export=view&id=TU_ID"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Texto del Botón</label>
-                <input
-                  type="text"
-                  value={newComm.buttonText}
-                  onChange={(e) => setNewComm({...newComm, buttonText: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ver Productos"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Enlace del Botón</label>
-                <input
-                  type="text"
-                  value={newComm.buttonLink}
-                  onChange={(e) => setNewComm({...newComm, buttonLink: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="/veterinarios/productos"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Válido Desde</label>
-                <input
-                  type="date"
-                  value={newComm.validFrom}
-                  onChange={(e) => setNewComm({...newComm, validFrom: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Válido Hasta</label>
-                <input
-                  type="date"
-                  value={newComm.validUntil}
-                  onChange={(e) => setNewComm({...newComm, validUntil: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Subtítulo</label>
+              <input
+                type="text"
+                value={newComm.subtitle}
+                onChange={(e) => setNewComm({...newComm, subtitle: e.target.value})}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Ej. Solo por este mes"
+              />
             </div>
           </div>
 
-          {/* Descripción */}
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+          <div className="mb-5">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Descripción corta</label>
             <textarea
               value={newComm.description}
               onChange={(e) => setNewComm({...newComm, description: e.target.value})}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Descripción del comunicado..."
+              rows={2}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="Escribe algo interesante para tus clientes..."
             />
           </div>
-          
-          <div className="mt-6 flex space-x-4">
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Link de la Imagen *</label>
+              <input
+                type="url"
+                value={newComm.image}
+                onChange={(e) => setNewComm({...newComm, image: e.target.value})}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="https://..."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Etiqueta Colorida</label>
+              <select
+                value={newComm.badge}
+                onChange={(e) => setNewComm({...newComm, badge: e.target.value})}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="NUEVO">🟩 NUEVO</option>
+                <option value="IMPORTANTE">🟥 IMPORTANTE</option>
+                <option value="PROMO">🟧 PROMO</option>
+                <option value="OFERTA">🟪 OFERTA</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6 pb-6 border-b border-gray-200">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">¿Dónde se muestra?</label>
+              <select
+                value={newComm.section}
+                onChange={(e) => setNewComm({...newComm, section: e.target.value})}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="veterinarios">🐶 Catálogo Veterinarios</option>
+                <option value="petshops">🏪 Catálogo Pet Shops</option>
+                <option value="ambos">✨ Ambos Catálogos</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Texto del Botón</label>
+              <input
+                type="text"
+                value={newComm.buttonText}
+                onChange={(e) => setNewComm({...newComm, buttonText: e.target.value})}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Link del Botón</label>
+              <input
+                type="text"
+                value={newComm.buttonLink}
+                onChange={(e) => setNewComm({...newComm, buttonLink: e.target.value})}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="/veterinarios/productos"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end">
             <button
               onClick={handleAddCommunication}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+              className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl font-bold transition-colors shadow-sm"
             >
-              ✅ Guardar Comunicado
-            </button>
-            <button
-              onClick={() => setShowAddForm(false)}
-              className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
-            >
-              ❌ Cancelar
+              Guardar y Publicar
             </button>
           </div>
         </div>
       )}
 
-      {/* Lista de comunicados */}
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-        <div className="px-6 py-4 bg-gray-50 border-b">
-          <h3 className="text-lg font-semibold text-gray-800">Comunicados Actuales</h3>
+      {loading ? (
+        <div className="py-12 text-center text-gray-500 font-medium">Cargando...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {communications.length === 0 ? (
+            <div className="col-span-full py-12 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300 text-gray-500">
+              No tienes ningún banner activo. ¡Crea uno para que tus clientes lo vean!
+            </div>
+          ) : (
+            communications.map((comm) => (
+              <div key={comm.id} className={`bg-white border rounded-2xl overflow-hidden shadow-sm transition-all hover:shadow-md ${comm.active ? 'border-gray-200' : 'border-gray-200 opacity-60'}`}>
+                <div className="h-40 bg-gray-100 relative overflow-hidden group">
+                  {comm.image ? (
+                    <img src={comm.image} alt={comm.title} className="w-full h-full object-cover" onError={(e) => e.target.src = '/placeholder-product.svg'} />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-4xl">📸</div>
+                  )}
+                  <div className={`absolute top-3 left-3 px-2 py-1 text-xs font-bold text-white rounded-md shadow-sm ${getBadgeColor(comm.badge)}`}>
+                    {comm.badge}
+                  </div>
+                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 text-xs font-bold text-gray-700 rounded-md shadow-sm border border-white/20">
+                    {comm.section === 'ambos' ? 'Ambos' : (comm.section === 'petshops' ? 'Pet Shop' : 'Vet')}
+                  </div>
+                </div>
+                
+                <div className="p-5">
+                  <h3 className="font-bold text-lg text-gray-900 truncate">{comm.title}</h3>
+                  <p className="text-sm text-gray-500 truncate mb-1">{comm.subtitle || 'Sin subtítulo'}</p>
+                  <p className="text-xs text-gray-400 line-clamp-2 mt-2 h-8">{comm.description}</p>
+                  
+                  <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
+                    <button
+                      onClick={() => handleToggleActive(comm.id, comm.active)}
+                      className={`text-sm font-semibold flex items-center gap-2 ${comm.active ? 'text-orange-600 hover:text-orange-700' : 'text-green-600 hover:text-green-700'}`}
+                    >
+                      <div className={`w-2 h-2 rounded-full ${comm.active ? 'bg-orange-500' : 'bg-gray-300'}`}></div>
+                      {comm.active ? 'Desactivar' : 'Reactivar'}
+                    </button>
+                    
+                    <button
+                      onClick={() => handleDelete(comm.id)}
+                      className="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                      title="Eliminar"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
-        
-        {loading ? (
-          <div className="p-8 text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-2 text-gray-600">Cargando comunicados...</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comunicado</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sección</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vigencia</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {communications.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
-                      No hay comunicados creados aún. ¡Agrega el primero!
-                    </td>
-                  </tr>
-                ) : (
-                  communications.map((comm) => (
-                    <tr key={comm.id} className={comm.active ? '' : 'opacity-50'}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-12 w-12">
-                            <img
-                              className="h-12 w-12 rounded-lg object-cover"
-                              src={comm.image}
-                              alt={comm.title}
-                              onError={(e) => {
-                                e.target.src = '/placeholder-product.svg'
-                              }}
-                            />
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {getTypeIcon(comm.type)} {comm.title}
-                            </div>
-                            <div className="text-sm text-gray-500">{comm.subtitle}</div>
-                            <div className={`inline-block px-2 py-1 text-xs font-bold text-white rounded-full ${getBadgeColor(comm.badge)}`}>
-                              {comm.badge}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {comm.section === 'ambos' ? 'Ambas' : comm.section}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {comm.validFrom} - {comm.validUntil}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          comm.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                          {comm.active ? 'Activo' : 'Inactivo'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleToggleActive(comm.id, comm.active)}
-                            className={`px-3 py-1 text-xs rounded ${
-                              comm.active 
-                                ? 'bg-red-100 text-red-700 hover:bg-red-200' 
-                                : 'bg-green-100 text-green-700 hover:bg-green-200'
-                            }`}
-                          >
-                            {comm.active ? 'Desactivar' : 'Activar'}
-                          </button>
-                          <button
-                            onClick={() => handleDelete(comm.id)}
-                            className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
-                          >
-                            Eliminar
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Instrucciones */}
-      <div className="mt-6 bg-blue-50 p-4 rounded-lg">
-        <h4 className="font-semibold text-blue-800 mb-2">📋 Instrucciones para Google Drive:</h4>
-        <ol className="text-sm text-blue-700 space-y-1">
-          <li>1. Sube tu imagen a Google Drive</li>
-          <li>2. Haz clic derecho → "Obtener enlace"</li>
-          <li>3. Cambia el enlace de: <code>https://drive.google.com/file/d/ID/view</code></li>
-          <li>4. Por: <code>https://drive.google.com/uc?export=view&id=ID</code></li>
-          <li>5. Usa ese enlace en el campo "URL de Imagen"</li>
-        </ol>
-      </div>
+      )}
     </div>
   )
 }

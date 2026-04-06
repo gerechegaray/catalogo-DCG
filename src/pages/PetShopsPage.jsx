@@ -22,6 +22,7 @@ const PetShopsProductosPage = () => {
   
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedPath, setSelectedPath] = useState([])
+  const [viewMode, setViewMode] = useState('grid')
 
   // Manejar parámetros de URL para filtros de navbar y búsqueda
   useEffect(() => {
@@ -169,22 +170,46 @@ const PetShopsProductosPage = () => {
           {/* Productos */}
           {!loading && !error && (
             <>
-              {/* Contador de resultados */}
-              <div className="mb-6">
-                <p className="text-gray-600">
-                  {sortedProducts.length} producto{sortedProducts.length !== 1 ? 's' : ''} encontrado{sortedProducts.length !== 1 ? 's' : ''}
+              {/* Contador de resultados y vista */}
+              <div className="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-3 sm:px-4 rounded-xl shadow-sm border border-gray-150">
+                <p className="text-gray-600 text-sm">
+                  <span className="font-bold text-gray-900">{sortedProducts.length}</span> producto{sortedProducts.length !== 1 ? 's' : ''} encontrado{sortedProducts.length !== 1 ? 's' : ''}
                   {selectedPath.length > 0 && ` en "${cascadingFiltersService.getPathString(selectedPath)}"`}
                   {searchTerm && ` que contienen "${searchTerm}"`}
                 </p>
+                <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-lg border border-gray-200">
+                  <button 
+                    onClick={() => setViewMode('grid')}
+                    className={`p-1.5 sm:p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-blue-600 border border-gray-200/60' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
+                    title="Vista de cuadrícula"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                  </button>
+                  <button 
+                    onClick={() => setViewMode('list')}
+                    className={`p-1.5 sm:p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-blue-600 border border-gray-200/60' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
+                    title="Vista de lista"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                  </button>
+                </div>
               </div>
 
-              {/* Grid de productos */}
+              {/* Grid/Lista de productos */}
               {sortedProducts.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {sortedProducts.map((product) => (
-                      <ProductCardWithCart key={product.id} product={product} />
-                  ))}
-                </div>
+                viewMode === 'grid' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {sortedProducts.map((product) => (
+                        <ProductCardWithCart key={product.id} product={product} viewMode="grid" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {sortedProducts.map((product) => (
+                        <ProductCardWithCart key={product.id} product={product} viewMode="list" />
+                    ))}
+                  </div>
+                )
               ) : (
                 <div className="text-center py-16">
                   <div className="text-4xl mb-4">🔍</div>

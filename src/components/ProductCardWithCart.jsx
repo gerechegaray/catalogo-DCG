@@ -4,7 +4,7 @@ import { useProducts } from '../context/ProductContext'
 import { useCart } from '../context/CartContext'
 import { ShoppingCart, Plus, Eye } from 'lucide-react'
 
-const ProductCardWithCart = ({ product }) => {
+const ProductCardWithCart = ({ product, viewMode = 'grid' }) => {
   const location = useLocation()
   const navigate = useNavigate()
   const { recordProductView, recordViewProductClick } = useProducts()
@@ -88,6 +88,119 @@ const ProductCardWithCart = ({ product }) => {
     return '$0'
   }
 
+  // --- RENDERING PARA VISTA DE LISTA ---
+  if (viewMode === 'list') {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-all duration-200 flex flex-col sm:flex-row gap-4 sm:gap-6 items-center">
+        {/* Imagen del producto (Pequeña) */}
+        <Link to={getProductUrl()} onClick={handleProductView} className="shrink-0 w-full sm:w-32 h-32">
+          <div className="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative group border border-gray-100">
+            {product.image ? (
+              <>
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="w-full h-full object-contain p-2"
+                  onError={(e) => {
+                    e.target.style.display = 'none'
+                    e.target.nextSibling.style.display = 'flex'
+                  }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/5 transition-opacity rounded-lg">
+                  <Eye className="w-6 h-6 text-gray-700" />
+                </div>
+              </>
+            ) : (
+              <div className="text-3xl text-gray-400">📦</div>
+            )}
+          </div>
+        </Link>
+
+        {/* Información Principal */}
+        <div className="flex-1 flex flex-col justify-center min-w-0 w-full text-center sm:text-left">
+          <Link to={getProductUrl()} onClick={handleProductView}>
+            <h3 className="font-semibold text-gray-900 text-lg hover:text-blue-600 transition-colors cursor-pointer truncate">
+              {product.name}
+            </h3>
+          </Link>
+          <div className="mt-1 flex items-center justify-center sm:justify-start gap-3">
+            <span className="text-xl font-bold text-blue-600">
+              {formatPrice(product.price)}
+            </span>
+            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+              product.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            }`}>
+              {product.stock > 0 ? 'En Stock' : 'Sin Stock'}
+            </span>
+          </div>
+          {product.description && (
+            <p className="text-gray-500 text-sm mt-2 line-clamp-2 hidden md:block">
+              {product.description}
+            </p>
+          )}
+        </div>
+
+        {/* Controles de Carrito (Derecha) */}
+        <div className="shrink-0 w-full sm:w-auto flex flex-row sm:flex-col items-center gap-3 border-t sm:border-t-0 sm:border-l border-gray-100 pt-3 sm:pt-0 sm:pl-6">
+          {product.stock > 0 ? (
+            <>
+              {/* Selector de cantidad compacto */}
+              <div className="flex items-center space-x-1 sm:space-x-2 bg-gray-50 p-1 rounded-lg border border-gray-200">
+                <button
+                  onClick={() => handleQuantityChange(quantity - 1)}
+                  disabled={quantity <= 1}
+                  className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-white hover:shadow-sm rounded disabled:opacity-50 transition-all"
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  min="1"
+                  max={product.stock}
+                  value={quantity}
+                  onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
+                  className="w-12 text-center bg-transparent border-none text-sm font-medium focus:ring-0 p-0"
+                />
+                <button
+                  onClick={() => handleQuantityChange(quantity + 1)}
+                  disabled={quantity >= product.stock}
+                  className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-white hover:shadow-sm rounded disabled:opacity-50 transition-all"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Botón Agregar compacto */}
+              <button
+                onClick={handleAddToCart}
+                disabled={isAddingToCart}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 sm:py-2.5 rounded-lg font-medium transition-colors"
+              >
+                {isAddingToCart ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-4 h-4" />
+                    <span className="sm:hidden lg:inline">Agregar</span>
+                  </>
+                )}
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={handleViewProduct}
+              className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-500 px-4 py-2.5 rounded-lg font-medium"
+            >
+              <Eye className="w-4 h-4" />
+              <span>Ver Info</span>
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // --- RENDERING PARA VISTA DE CUADRÍCULA (GRID) ---
   return (
     <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
       {/* Imagen del producto - Enlace a detalle */}
