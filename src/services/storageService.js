@@ -41,15 +41,14 @@ class StorageService {
         return this.memoryCache[cacheKey]
       }
       
-      console.log(`📥 Descargando catálogo ${userType} desde url directa...`)
+      console.log(`📥 Descargando catálogo ${userType} desde el servidor de Vercel...`)
       
-      // Construir la URL pública de Storage (saltamos el SDK para evitar error 412/CORS bugs)
-      const bucketUrl = "https://firebasestorage.googleapis.com/v0/b/catalogo-veterinaria-alegra.firebasestorage.app/o/catalog%2F";
+      // Ahora los archivos JSON viven en tu propio repositorio gracias a GitHub Actions
       const fileName = userType === 'pet' ? 'petshops.json' : 'veterinarios.json';
-      const url = `${bucketUrl}${fileName}?alt=media`;
+      const url = `/catalog/${fileName}`;
       
-      // Añadir timestamp para evitar cache extrema
-      const fetchUrl = `${url}&t=${Date.now()}`;
+      // Añadir timestamp para evitar cache en navegadores estrictos
+      const fetchUrl = `${url}?t=${Date.now()}`;
       
       const response = await fetch(fetchUrl);
       

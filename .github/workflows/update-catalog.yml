@@ -1,0 +1,41 @@
+name: Sincronizar Catálogo de Alegra a Vercel
+
+on:
+  schedule:
+    # Se ejecuta a la medianoche (Hora Argentina: 03:00 UTC) todos los días
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    # Permite ejecutarlo manualmente desde la pestaña "Actions" en GitHub
+
+jobs:
+  sync_and_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+        with:
+          # Para que el commit automático salte triggers duplicados, pero permita que Vercel actúe
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar Axios
+        run: npm install axios
+
+      - name: Ejecutar script de Sincronización
+        env:
+          ALEGRA_API_KEY: ${{ secrets.ALEGRA_API_KEY }}
+        run: node scripts/syncAlegra.js
+
+      - name: Commit y Push de los nuevos JSON
+        run: |
+          git config --global user.name "GitHub Action Bot"
+          git config --global user.email "bot@github.com"
+          git add public/catalog/*.json
+          # Commit si hay cambios, ignorar si nada cambió
+          git diff --quiet && git diff --staged --quiet || git commit -m "chore(catalog): actualizacion automatica de precios"
+          git push origin main
