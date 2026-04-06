@@ -13,24 +13,57 @@ const PublicPage = () => {
     const loadProducts = async () => {
       try {
         setLoading(true)
-        // Cargar productos desde Firebase cache (no desde Alegra)
+        // Cargar productos desde cache
         const cachedProducts = await cacheService.getProductsFromCache()
-        setProducts(cachedProducts)
         
-        // Usar el mismo sistema de filtros que las otras páginas
-        // Aplicar filtros para mostrar solo alimento-perro y alimento-gato
-        const alimentoPerroProducts = cascadingFiltersService.applyCascadingFilters('veterinarios', ['alimento-perro'], cachedProducts)
-        const alimentoGatoProducts = cascadingFiltersService.applyCascadingFilters('veterinarios', ['alimento-gato'], cachedProducts)
+        // Filtrar SOLO productos que tengan lista de precio "pet"
+        const petProducts = cachedProducts.filter(product => {
+          if (product.priceLists && Array.isArray(product.priceLists)) {
+            return product.priceLists.some(pl => 
+              pl.name && pl.name.toLowerCase().includes('pet')
+            )
+          }
+          // Si viene del catálogo pet pre-filtrado, incluir
+          if (product.userType === 'pet') return true
+          return false
+        })
+
+        // Calcular el precio pet para cada producto
+        const petProductsWithPrice = petProducts.map(product => {
+          let petPrice = product.price
+          
+          if (product.priceLists && Array.isArray(product.priceLists)) {
+            const petPriceList = product.priceLists.find(pl => 
+              pl.name && pl.name.toLowerCase().includes('pet')
+            )
+            if (petPriceList) {
+              petPrice = parseFloat(petPriceList.price)
+            }
+          }
+          
+          return { ...product, petPrice }
+        })
+        
+        setProducts(petProductsWithPrice)
+        
+        // Aplicar filtros de sección petshops para alimento-perro y alimento-gato
+        const alimentoPerroProducts = cascadingFiltersService.applyCascadingFilters('petshops', ['alimento-perro'], petProductsWithPrice)
+        const alimentoGatoProducts = cascadingFiltersService.applyCascadingFilters('petshops', ['alimento-gato'], petProductsWithPrice)
         
         // Combinar ambos tipos de productos
         const publicProducts = [...alimentoPerroProducts, ...alimentoGatoProducts]
         
-        // Ordenar por categoría y luego por nombre
-        const sortedProducts = publicProducts.sort((a, b) => {
-          if (a.category !== b.category) {
-            return a.category.localeCompare(b.category)
-          }
-          return a.name.localeCompare(b.name)
+        // Eliminar duplicados (por si un producto matchea en ambas)
+        const uniqueProducts = publicProducts.filter((product, index, self) =>
+          index === self.findIndex(p => p.id === product.id)
+        )
+        
+        // Ordenar por marca (description) y luego por nombre
+        const sortedProducts = uniqueProducts.sort((a, b) => {
+          const descA = (a.description || '').toLowerCase()
+          const descB = (b.description || '').toLowerCase()
+          if (descA !== descB) return descA.localeCompare(descB)
+          return (a.name || '').localeCompare(b.name || '')
         })
         
         setFilteredProducts(sortedProducts)
@@ -48,46 +81,23 @@ const PublicPage = () => {
 
   // Filtrar productos según categoría y subcategoría seleccionadas
   const getDisplayProducts = () => {
-    let products = filteredProducts
+    let displayProds = filteredProducts
 
-    // Filtrar por categoría principal usando cascadingFiltersService
+    // Filtrar por categoría principal
     if (selectedCategory !== 'all') {
-      products = cascadingFiltersService.applyCascadingFilters('veterinarios', [selectedCategory], filteredProducts)
-      console.log('🔍 Filtro por categoría:', selectedCategory, 'Productos encontrados:', products.length)
+      displayProds = cascadingFiltersService.applyCascadingFilters('petshops', [selectedCategory], filteredProducts)
     }
 
     // Filtrar por marca específica si está seleccionada
     if (selectedSubcategory !== 'all') {
-      products = products.filter(product => {
-        // Buscar la marca en la descripción del producto
+      displayProds = displayProds.filter(product => {
         const productDescription = (product.description || '').toLowerCase()
         const selectedBrand = selectedSubcategory.toLowerCase()
-        
-        // Mapeo de marcas para búsqueda más flexible
-        const brandMappings = {
-          'manada': 'manada',
-          'seguidor': 'seguidor',
-          'old prince premium': 'old prince premium',
-          'old prince equilibrium': 'old prince equilibrium',
-          'old prince noveles': 'old prince noveles',
-          'company': 'company',
-          'origen': 'origen',
-          'fawna': 'fawna'
-        }
-        
-        const searchTerm = brandMappings[selectedBrand] || selectedBrand
-        const isMatch = productDescription.includes(searchTerm)
-        
-        if (isMatch) {
-          console.log('✅ Producto encontrado:', product.name, 'Marca:', searchTerm)
-        }
-        
-        return isMatch
+        return productDescription.includes(selectedBrand)
       })
-      console.log('🔍 Filtro por marca:', selectedSubcategory, 'Productos encontrados:', products.length)
     }
 
-    return products
+    return displayProds
   }
 
   const displayProducts = getDisplayProducts()
@@ -97,48 +107,31 @@ const PublicPage = () => {
     setSelectedSubcategory('all')
   }, [selectedCategory])
 
-  // Obtener subcategorías disponibles según la categoría seleccionada
-  const getAvailableSubcategories = () => {
-    if (selectedCategory === 'all') {
-      return [
-        { id: 'all', name: 'Todas las marcas' },
-        { id: 'manada', name: 'Manada' },
-        { id: 'seguidor', name: 'Seguidor' },
-        { id: 'old prince premium', name: 'Old Prince Premium' },
-        { id: 'old prince equilibrium', name: 'Old Prince Equilibrium' },
-        { id: 'old prince noveles', name: 'Old Prince Noveles' },
-        { id: 'company', name: 'Company' },
-        { id: 'origen', name: 'Origen' },
-        { id: 'fawna', name: 'Fawna' }
-      ]
+  // Obtener marcas disponibles dinámicamente según los productos filtrados
+  const getAvailableBrands = () => {
+    let sourceProducts = filteredProducts
+    
+    if (selectedCategory !== 'all') {
+      sourceProducts = cascadingFiltersService.applyCascadingFilters('petshops', [selectedCategory], filteredProducts)
     }
     
-    if (selectedCategory === 'alimento-perro') {
-      return [
-        { id: 'all', name: 'Todas las marcas' },
-        { id: 'manada', name: 'Manada' },
-        { id: 'seguidor', name: 'Seguidor' },
-        { id: 'old prince premium perro', name: 'Old Prince Premium' },
-        { id: 'old prince equilibrium perro', name: 'Old Prince Equilibrium' },
-        { id: 'old prince noveles perro', name: 'Old Prince Noveles' },
-        { id: 'company perro', name: 'Company' },
-        { id: 'origen perro', name: 'Origen' },
-        { id: 'fawna perro', name: 'Fawna' }
-      ]
-    }
+    // Extraer marcas únicas de description
+    const brandsSet = new Set()
+    sourceProducts.forEach(p => {
+      if (p.description) brandsSet.add(p.description.toLowerCase())
+    })
     
-    if (selectedCategory === 'alimento-gato') {
-      return [
-        { id: 'all', name: 'Todas las marcas' },
-        { id: 'old prince premium gato', name: 'Old Prince Premium' },
-        { id: 'old prince equilibrium gato', name: 'Old Prince Equilibrium' },
-        { id: 'company gato', name: 'Company' },
-        { id: 'origen gato', name: 'Origen' },
-        { id: 'fawna gato', name: 'Fawna' }
-      ]
-    }
-    
-    return [{ id: 'all', name: 'Todas las marcas' }]
+    const brands = Array.from(brandsSet).sort()
+    return [
+      { id: 'all', name: 'Todas las marcas' },
+      ...brands.map(b => ({ id: b, name: b.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') }))
+    ]
+  }
+
+  // Calcular el precio sugerido al público (+25%)
+  const getSuggestedPrice = (product) => {
+    const basePrice = product.petPrice || product.price || 0
+    return Math.round(basePrice * 1.25)
   }
 
   if (loading) {
@@ -154,11 +147,10 @@ const PublicPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header con logo y diseño elegante */}
+      {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="flex items-center justify-center space-x-4">
-            {/* Logo */}
             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg">
               <img 
                 src="/DCG JPG-01.jpg" 
@@ -173,19 +165,16 @@ const PublicPage = () => {
                 DCG
               </div>
             </div>
-            
-            {/* Título */}
             <div className="text-center">
               <h1 className="text-3xl font-bold text-white mb-2">
                 Lista de Precios
               </h1>
               <p className="text-blue-100 text-lg">
-                Alimentos para Mascotas
+                Alimentos para Mascotas — Precio Sugerido al Público
               </p>
             </div>
           </div>
           
-          {/* Botón para volver a petshops */}
           <div className="mt-4 text-center">
             <a
               href="/petshops"
@@ -253,9 +242,9 @@ const PublicPage = () => {
                 onChange={(e) => setSelectedSubcategory(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
               >
-                {getAvailableSubcategories().map(subcategory => (
-                  <option key={subcategory.id} value={subcategory.id}>
-                    {subcategory.name}
+                {getAvailableBrands().map(brand => (
+                  <option key={brand.id} value={brand.id}>
+                    {brand.name}
                   </option>
                 ))}
               </select>
@@ -294,7 +283,6 @@ const PublicPage = () => {
                   />
                 ) : null}
                 
-                {/* Placeholder si no hay imagen */}
                 <div 
                   className="w-full h-full bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg flex items-center justify-center"
                   style={{ display: product.image ? 'none' : 'flex' }}
@@ -314,11 +302,12 @@ const PublicPage = () => {
                   {product.name}
                 </h3>
                 
-                {/* Precio Sugerido */}
+                {/* Precio Sugerido al Público */}
                 <div className="text-center">
                   <span className="text-lg font-bold text-blue-600">
-                    {product.price ? `$${Math.round(product.price * 1.25).toLocaleString()}` : 'N/A'}
+                    ${getSuggestedPrice(product).toLocaleString()}
                   </span>
+                  <p className="text-xs text-gray-400 mt-0.5">Precio sugerido al público</p>
                 </div>
               </div>
             </div>
