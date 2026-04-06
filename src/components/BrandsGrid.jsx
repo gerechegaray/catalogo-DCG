@@ -23,28 +23,7 @@ const BrandsGrid = () => {
         setLoading(true)
         const userType = isVeterinarios ? 'veterinarios' : 'petshops'
         
-        // Intentar cargar desde Firebase Storage
-        const isDevelopment = window.location.hostname === 'localhost' || 
-                             window.location.hostname === '127.0.0.1'
-        
-        if (!isDevelopment && storage) {
-          try {
-            console.log('📥 Intentando cargar configuración desde Firebase Storage...')
-            const storageRef = ref(storage, 'config/brandsConfig.json')
-            const bytes = await getBytes(storageRef)
-            const text = new TextDecoder().decode(bytes)
-            const configData = JSON.parse(text)
-            console.log('✅ Configuración cargada desde Firebase Storage')
-            
-            const brandsConfig = configData[userType] || configData.veterinarios
-            setConfig(brandsConfig)
-            setLoading(false)
-            return
-          } catch (storageError) {
-            console.warn('⚠️ Error cargando desde Storage, usando configuración estática:', storageError)
-            // Fallback a configuración estática
-          }
-        }
+        // Firebase Storage deshabilitado para evitar errores 412 por permisos IAM rotos
         
         // Usar configuración estática como fallback
         const brandsConfig = getBrandsConfig(userType)
