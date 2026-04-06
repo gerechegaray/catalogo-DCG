@@ -7,26 +7,7 @@ import { useProducts } from '../context/ProductContext'
 const DynamicNavbar = () => {
   const location = useLocation()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isDesktopCategoriesOpen, setIsDesktopCategoriesOpen] = useState(false)
   const { recordNavbarClick } = useProducts()
-  
-  // Cerrar el menú desplegable al hacer click fuera
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      // Verificar si el click fue fuera de los botones de categoría
-      if (!event.target.closest('[data-category-area]')) {
-        setIsDesktopCategoriesOpen(false)
-      }
-    }
-    
-    if (isDesktopCategoriesOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isDesktopCategoriesOpen])
   
   // Determinar la sección actual y la URL base
   const isVeterinarios = location.pathname.startsWith('/veterinarios')
@@ -60,9 +41,9 @@ const DynamicNavbar = () => {
     <div className={`bg-gradient-to-r ${colors.bg} text-white shadow-[0_4px_20px_rgba(0,0,0,0.1)] relative z-50`}>
       <div className="container mx-auto px-4 md:px-6">
         {/* Versión Desktop - Navegación horizontal */}
-        <nav className="hidden lg:flex items-center space-x-1 py-4 overflow-x-auto scrollbar-hide">
+        <nav className="hidden lg:flex items-center py-2 overflow-x-auto scrollbar-hide">
           {isAdmin ? (
-            <>
+            <div className="flex items-center space-x-1 w-full">
               {/* Admin solo muestra VETERINARIOS, PET SHOPS y ADMIN */}
               <Link 
                 to="/veterinarios" 
@@ -85,60 +66,34 @@ const DynamicNavbar = () => {
               >
                 ADMIN
               </Link>
-            </>
+            </div>
           ) : (
-            <>
-              {/* Botón de categorías con menú desplegable */}
-              <div className="relative" data-category-area>
-                <button
-                  onClick={() => setIsDesktopCategoriesOpen(!isDesktopCategoriesOpen)}
-                  className={`${colors.hover} px-5 py-3 rounded-2xl transition-all duration-300 font-bold text-sm tracking-tight flex items-center gap-2 whitespace-nowrap bg-white/5 border border-white/5 hover:border-white/20`}
-                >
-                  <Menu className="w-4 h-4" />
-                  EXPLORAR CATEGORÍAS
-                  <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isDesktopCategoriesOpen ? 'rotate-180' : ''}`} />
-                </button>
+            <div className="flex items-center w-full">
+              {/* Categorías Directas en el Escritorio */}
+              <div className="flex items-center space-x-1">
+                {(isPetShops ? categoryMappingService.getNavbarCategoriesForPetShops() : categoryMappingService.getNavbarCategories()).map((category) => (
+                  <Link
+                    key={category.id}
+                    to={`${baseUrl}?category=${category.id}`}
+                    onClick={() => handleNavbarClick(`CATEGORIA: ${category.name}`)}
+                    className={`${colors.hover} px-4 py-3 rounded-2xl transition-all duration-300 font-bold text-[13px] uppercase tracking-wide whitespace-nowrap active:scale-95`}
+                  >
+                    {category.name}
+                  </Link>
+                ))}
                 
-                {/* Menú desplegable Estilo Mega Menu */}
-                {isDesktopCategoriesOpen && (
-                  <div className="absolute top-full left-0 mt-3 bg-white text-gray-900 shadow-2xl rounded-3xl border border-gray-100 p-6 min-w-[280px] animate-in fade-in slide-in-from-top-2 duration-300">
-                    <div className="mb-4">
-                       <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 px-2">Categorías principales</h3>
-                       <div className="space-y-1">
-                        {(isPetShops ? categoryMappingService.getNavbarCategoriesForPetShops() : categoryMappingService.getNavbarCategories()).map((category) => (
-                          <Link
-                            key={category.id}
-                            to={`${baseUrl}?category=${category.id}`}
-                            onClick={() => {
-                              handleNavbarClick(`CATEGORIA: ${category.name}`)
-                              setIsDesktopCategoriesOpen(false)
-                            }}
-                            className="flex items-center justify-between px-3 py-3 rounded-xl hover:bg-gray-50 text-gray-700 hover:text-blue-600 font-bold text-sm transition-all group"
-                          >
-                            <span>{category.name}</span>
-                            <Plus className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </Link>
-                        ))}
-                       </div>
-                    </div>
-                    
-                    <div className="pt-4 border-t border-gray-50">
-                      <Link
-                        to={baseUrl}
-                        onClick={() => {
-                          handleNavbarClick('VER TODOS')
-                          setIsDesktopCategoriesOpen(false)
-                        }}
-                        className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${isPetShops ? 'bg-orange-50 text-orange-600 hover:bg-orange-100 font-bold' : 'bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold'}`}
-                      >
-                        Ver todo el catálogo
-                      </Link>
-                    </div>
-                  </div>
-                )}
+                {/* Botón Ver Todo */}
+                <Link
+                  to={baseUrl}
+                  onClick={() => handleNavbarClick('VER TODOS')}
+                  className={`${colors.hover} px-4 py-3 rounded-2xl transition-all duration-300 font-bold text-[13px] uppercase tracking-wide whitespace-nowrap active:scale-95 border border-transparent hover:border-white/10`}
+                >
+                  VER TODO EL CATÁLOGO
+                </Link>
               </div>
               
-              <div className="flex items-center space-x-1 pl-4">
+              {/* Espaciador y Enlaces Adicionales */}
+              <div className="flex items-center space-x-1 ml-auto pl-4">
                 <Link 
                   to="/contacto" 
                   onClick={() => handleNavbarClick('CONTACTO')}
@@ -162,7 +117,7 @@ const DynamicNavbar = () => {
                   </button>
                 )}
               </div>
-            </>
+            </div>
           )}
         </nav>
 
