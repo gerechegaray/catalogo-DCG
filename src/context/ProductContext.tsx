@@ -295,8 +295,8 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
   const applyFilters = (): void => {
     let filtered = [...state.products]
     
-    // Filtro automático por tipo de usuario (desde AuthContext)
-    filtered = getFilteredProducts(filtered)
+    // Filtro automático por tipo de usuario ya no es necesario aquí.
+    // El backend (GitHub Actions) ya pre-empaquetó los catálogos correctos.
     
     // Filtro por categoría (marca/laboratorio)
     if (state.filters.category) {
