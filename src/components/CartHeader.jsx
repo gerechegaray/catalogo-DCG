@@ -44,11 +44,11 @@ const CartHeader = () => {
     if (location.pathname.startsWith('/admin')) {
       return '/admin'
     } else if (location.pathname.startsWith('/veterinarios')) {
-      return '/veterinarios'
+      return '/veterinarios/productos'
     } else if (location.pathname.startsWith('/petshops')) {
-      return '/petshops'
+      return '/petshops/productos'
     } else {
-      return '/veterinarios' // Default
+      return '/veterinarios/productos' // Default
     }
   }
 

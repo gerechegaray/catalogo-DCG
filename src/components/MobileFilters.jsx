@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useProducts } from '../context/ProductContext'
 import categoryMappingService from '../services/categoryMappingService'
+import { formatToTitle } from '../utils/textUtils'
 
 const MobileFilters = () => {
   const { 
@@ -13,12 +14,6 @@ const MobileFilters = () => {
   } = useProducts()
 
   const [isOpen, setIsOpen] = useState(false)
-
-  // Función para formatear texto a título (primera letra mayúscula, resto minúsculas)
-  const formatToTitle = (text) => {
-    if (!text) return ''
-    return text.toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
-  }
 
   // Obtener productos filtrados por categoría navbar si está activa
   const getFilteredProductsForSidebar = () => {

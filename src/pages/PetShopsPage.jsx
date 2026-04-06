@@ -6,6 +6,7 @@ import ProductDebug from '../components/ProductDebug'
 import CascadingFilters from '../components/CascadingFilters'
 import MobileCascadingFilters from '../components/MobileCascadingFilters'
 import cascadingFiltersService from '../services/cascadingFiltersService'
+import { formatToTitle } from '../utils/textUtils'
 
 const PetShopsProductosPage = () => {
   const location = useLocation()

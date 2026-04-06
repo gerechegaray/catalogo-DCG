@@ -2,18 +2,13 @@ import React, { useState } from 'react'
 import { useProducts } from '../context/ProductContext'
 import cascadingFiltersService from '../services/cascadingFiltersService'
 import { X } from 'lucide-react'
+import { formatToTitle } from '../utils/textUtils'
 
 const CascadingFilters = ({ section = 'veterinarios', selectedPath = [], onPathChange, products = [] }) => {
   const { filteredProducts, filters, setNavbarCategory, clearFilters } = useProducts()
 
   // Usar los productos pasados como prop, o filteredProducts como fallback
   const productsToUse = products.length > 0 ? products : filteredProducts
-
-  // Función para formatear texto a título (primera letra mayúscula, resto minúsculas)
-  const formatToTitle = (text) => {
-    if (!text) return ''
-    return text.toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
-  }
 
   // Obtener opciones del nivel actual
   const getCurrentOptions = () => {

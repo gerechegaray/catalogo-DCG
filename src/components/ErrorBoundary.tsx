@@ -53,7 +53,14 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   handleGoHome = () => {
-    window.location.href = '/'
+    const path = window.location.pathname
+    if (path.includes('/veterinarios')) {
+      window.location.href = '/veterinarios/productos'
+    } else if (path.includes('/petshops')) {
+      window.location.href = '/petshops/productos'
+    } else {
+      window.location.href = '/'
+    }
   }
 
   render() {
