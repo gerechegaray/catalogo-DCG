@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import cacheService from '../services/cacheService'
 import cascadingFiltersService from '../services/cascadingFiltersService'
+import { ChevronDown } from 'lucide-react'
 
 const PublicPage = () => {
   const [products, setProducts] = useState([])

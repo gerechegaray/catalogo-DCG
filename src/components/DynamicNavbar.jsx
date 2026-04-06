@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { ChevronDown, Menu, X } from 'lucide-react'
+import { ChevronDown, Menu, X, Plus } from 'lucide-react'
 import categoryMappingService from '../services/categoryMappingService'
 import { useProducts } from '../context/ProductContext'
 

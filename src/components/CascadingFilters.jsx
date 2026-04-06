@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useProducts } from '../context/ProductContext'
 import cascadingFiltersService from '../services/cascadingFiltersService'
+import { X } from 'lucide-react'
 
 const CascadingFilters = ({ section = 'veterinarios', selectedPath = [], onPathChange, products = [] }) => {
   const { filteredProducts, filters, setNavbarCategory, clearFilters } = useProducts()
