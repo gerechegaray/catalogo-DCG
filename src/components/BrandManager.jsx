@@ -1,28 +1,22 @@
 import React, { useState, useEffect } from 'react'
-import { getAllBrands, saveBrand, updateBrand, deleteBrand, saveBrandsConfig } from '../services/brandsService'
-import { populateInitialBrands } from '../utils/populateBrands'
-import { replaceConfigFile, showConfigContent, applyConfigChanges } from '../utils/configFileManager'
-import { ref, uploadBytes, getDownloadURL, uploadString } from 'firebase/storage'
-import { storage } from '../config/firebase'
-import { useToast } from '../context/ToastContext'
-import { handleError } from '../utils/errorHandler'
+import { getAllBrands, saveBrand, updateBrand, deleteBrand } from '../services/brandsService'
 
 const BrandManager = () => {
-  const { showSuccess, showError } = useToast()
   const [brands, setBrands] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showAddForm, setShowAddForm] = useState(false)
+  const [showForm, setShowForm] = useState(false)
   const [editingBrand, setEditingBrand] = useState(null)
-  const [newBrand, setNewBrand] = useState({
+  const [saving, setSaving] = useState(false)
+  const [selectedSection, setSelectedSection] = useState('veterinarios')
+
+  const emptyForm = {
     name: '',
     logo: '',
     color: '#0066CC',
     description: '',
-    category: 'veterinarios' // veterinarios o petshops
-  })
-  const [uploadingLogo, setUploadingLogo] = useState(false)
-  const [logoPreview, setLogoPreview] = useState(null)
-  const [logoFile, setLogoFile] = useState(null)
+    category: 'veterinarios'
+  }
+  const [form, setForm] = useState(emptyForm)
 
   useEffect(() => {
     loadBrands()
@@ -31,652 +25,289 @@ const BrandManager = () => {
   const loadBrands = async () => {
     try {
       setLoading(true)
-      const brandsData = await getAllBrands()
-      setBrands(brandsData)
+      const data = await getAllBrands()
+      setBrands(data)
     } catch (error) {
-      console.error('Error al cargar marcas:', error)
+      console.error('Error cargando marcas:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleAddBrand = async () => {
-    try {
-      // Si hay un archivo de logo, subirlo primero
-      let logoUrl = newBrand.logo
-      if (logoFile) {
-        logoUrl = await uploadLogoToStorage(logoFile, newBrand.name)
-      }
-      
-      await saveBrand({ ...newBrand, logo: logoUrl })
-      await loadBrands()
-      
-      // Actualizar automáticamente la configuración en Storage
-      await updateBrandsConfigInStorage()
-      
-      setNewBrand({
-        name: '',
-        logo: '',
-        color: '#0066CC',
-        description: '',
-        category: 'veterinarios'
-      })
-      setLogoPreview(null)
-      setLogoFile(null)
-      setShowAddForm(false)
-      showSuccess('✅ Marca agregada exitosamente')
-    } catch (error) {
-      const errorMessage = handleError(error, {
-        component: 'BrandManager',
-        action: 'handleAddBrand'
-      })
-      showError(errorMessage)
+  const handleSave = async () => {
+    if (!form.name.trim()) {
+      alert('Escribe un nombre para la marca')
+      return
     }
-  }
-
-  const handleUpdateBrand = async () => {
     try {
-      // Si hay un archivo de logo nuevo, subirlo primero
-      let logoUrl = editingBrand.logo
-      if (logoFile) {
-        logoUrl = await uploadLogoToStorage(logoFile, editingBrand.name)
+      setSaving(true)
+      if (editingBrand) {
+        await updateBrand(editingBrand.id, form)
+      } else {
+        await saveBrand(form)
       }
-      
-      await updateBrand(editingBrand.id, { ...editingBrand, logo: logoUrl })
       await loadBrands()
-      
-      // Actualizar automáticamente la configuración en Storage
-      await updateBrandsConfigInStorage()
-      
+      setForm(emptyForm)
+      setShowForm(false)
       setEditingBrand(null)
-      setLogoPreview(null)
-      setLogoFile(null)
-      showSuccess('✅ Marca actualizada exitosamente')
     } catch (error) {
-      const errorMessage = handleError(error, {
-        component: 'BrandManager',
-        action: 'handleUpdateBrand'
-      })
-      showError(errorMessage)
-    }
-  }
-
-  const handleDeleteBrand = async (brandId) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar esta marca?')) {
-      try {
-        await deleteBrand(brandId)
-        await loadBrands()
-      } catch (error) {
-        console.error('Error al eliminar marca:', error)
-      }
-    }
-  }
-
-  const handlePopulateInitialBrands = async () => {
-    if (window.confirm('¿Estás seguro de que quieres agregar las marcas iniciales? Esto agregará todas las marcas predefinidas.')) {
-      try {
-        await populateInitialBrands()
-        await loadBrands()
-        showSuccess('✅ Marcas iniciales agregadas exitosamente')
-      } catch (error) {
-        const errorMessage = handleError(error, {
-          component: 'BrandManager',
-          action: 'handlePopulateInitialBrands'
-        })
-        showError(errorMessage)
-      }
-    }
-  }
-
-  // Función para actualizar la configuración en Storage automáticamente
-  const updateBrandsConfigInStorage = async () => {
-    try {
-      const veterinariosBrands = brands.filter(brand => 
-        brand.category === 'veterinarios' || brand.category === 'ambos'
-      )
-      const petshopsBrands = brands.filter(brand => 
-        brand.category === 'petshops' || brand.category === 'ambos'
-      )
-
-      const config = {
-        veterinarios: {
-          title: 'Laboratorios y Marcas',
-          subtitle: '',
-          brands: veterinariosBrands.map(brand => ({
-            name: brand.name,
-            logo: brand.logo,
-            color: brand.color,
-            description: brand.description
-          }))
-        },
-        petshops: {
-          title: 'Laboratorios y Marcas',
-          subtitle: '',
-          brands: petshopsBrands.map(brand => ({
-            name: brand.name,
-            logo: brand.logo,
-            color: brand.color,
-            description: brand.description
-          }))
-        }
-      }
-
-      // Guardar en Firestore
-      await saveBrandsConfig(config)
-      
-      // Subir a Firebase Storage en producción
-      const isDevelopment = window.location.hostname === 'localhost' || 
-                           window.location.hostname === '127.0.0.1'
-      
-      if (!isDevelopment && storage) {
-        try {
-          console.log('📤 Actualizando configuración en Firebase Storage...')
-          const configJson = JSON.stringify(config, null, 2)
-          const storageRef = ref(storage, 'config/brandsConfig.json')
-          await uploadString(storageRef, configJson, 'raw')
-          console.log('✅ Configuración actualizada en Firebase Storage')
-        } catch (storageError) {
-          console.error('Error subiendo a Storage:', storageError)
-          // No mostrar error al usuario, solo log
-        }
-      }
-    } catch (error) {
-      console.error('Error actualizando configuración:', error)
-      // No mostrar error al usuario, solo log
-    }
-  }
-
-  const generateStaticConfig = async () => {
-    try {
-      const veterinariosBrands = brands.filter(brand => 
-        brand.category === 'veterinarios' || brand.category === 'ambos'
-      )
-      const petshopsBrands = brands.filter(brand => 
-        brand.category === 'petshops' || brand.category === 'ambos'
-      )
-
-      const config = {
-        veterinarios: {
-          title: 'Laboratorios y Marcas',
-          subtitle: '',
-          brands: veterinariosBrands.map(brand => ({
-            name: brand.name,
-            logo: brand.logo,
-            color: brand.color,
-            description: brand.description
-          }))
-        },
-        petshops: {
-          title: 'Laboratorios y Marcas',
-          subtitle: '',
-          brands: petshopsBrands.map(brand => ({
-            name: brand.name,
-            logo: brand.logo,
-            color: brand.color,
-            description: brand.description
-          }))
-        }
-      }
-
-      // Guardar en Firestore
-      await saveBrandsConfig(config)
-      
-      // Subir a Firebase Storage en producción
-      const isDevelopment = window.location.hostname === 'localhost' || 
-                           window.location.hostname === '127.0.0.1'
-      
-      if (!isDevelopment && storage) {
-        try {
-          console.log('📤 Subiendo configuración a Firebase Storage...')
-          const configJson = JSON.stringify(config, null, 2)
-          const storageRef = ref(storage, 'config/brandsConfig.json')
-          await uploadString(storageRef, configJson, 'raw')
-          console.log('✅ Configuración subida a Firebase Storage exitosamente')
-          
-          showSuccess('✅ Configuración actualizada correctamente. Los cambios se verán reflejados en la página de veterinarios y petshops.')
-        } catch (storageError) {
-          const errorMessage = handleError(storageError, {
-            component: 'BrandManager',
-            action: 'generateStaticConfig - Storage upload'
-          })
-          showError('⚠️ Configuración guardada en Firestore pero error al subir a Storage. ' + errorMessage)
-        }
-      }
-      
-      // En desarrollo, descargar archivo para reemplazo manual
-      if (isDevelopment) {
-        await applyConfigChanges(config)
-      }
-      
-    } catch (error) {
-      const errorMessage = handleError(error, {
-        component: 'BrandManager',
-        action: 'generateStaticConfig'
-      })
-      showError(errorMessage)
-    }
-  }
-
-  // Función para subir logo a Firebase Storage
-  const uploadLogoToStorage = async (file, brandName) => {
-    try {
-      setUploadingLogo(true)
-      
-      // Validar tipo de archivo
-      if (!file.type.startsWith('image/')) {
-        throw new Error('El archivo debe ser una imagen')
-      }
-      
-      // Validar tamaño (máximo 2MB)
-      if (file.size > 2 * 1024 * 1024) {
-        throw new Error('La imagen no debe superar los 2MB')
-      }
-      
-      // Crear nombre único para el archivo
-      const timestamp = Date.now()
-      const sanitizedName = brandName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()
-      const fileExtension = file.name.split('.').pop()
-      const fileName = `brands/${sanitizedName}_${timestamp}.${fileExtension}`
-      
-      // Crear referencia en Storage
-      const storageRef = ref(storage, fileName)
-      
-      // Subir archivo
-      await uploadBytes(storageRef, file)
-      
-      // Obtener URL de descarga
-      const downloadURL = await getDownloadURL(storageRef)
-      
-      console.log('✅ Logo subido exitosamente:', downloadURL)
-      return downloadURL
-      
-    } catch (error) {
-      console.error('❌ Error subiendo logo:', error)
-      throw error
+      alert('Error al guardar: ' + error.message)
     } finally {
-      setUploadingLogo(false)
+      setSaving(false)
     }
   }
 
-  // Manejar selección de archivo
-  const handleLogoFileChange = (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-    
-    // Validar tipo
-    if (!file.type.startsWith('image/')) {
-      alert('❌ El archivo debe ser una imagen (JPG, PNG, etc.)')
-      return
-    }
-    
-    // Validar tamaño
-    if (file.size > 2 * 1024 * 1024) {
-      alert('❌ La imagen no debe superar los 2MB')
-      return
-    }
-    
-    setLogoFile(file)
-    
-    // Crear preview
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setLogoPreview(reader.result)
-    }
-    reader.readAsDataURL(file)
+  const handleEdit = (brand) => {
+    setForm({
+      name: brand.name || '',
+      logo: brand.logo || '',
+      color: brand.color || '#0066CC',
+      description: brand.description || '',
+      category: brand.category || 'veterinarios'
+    })
+    setEditingBrand(brand)
+    setShowForm(true)
   }
 
-  // Limpiar preview y archivo
-  const clearLogoSelection = () => {
-    setLogoFile(null)
-    setLogoPreview(null)
-    // Resetear input file
-    const fileInput = document.getElementById('logo-file-input')
-    if (fileInput) fileInput.value = ''
-  }
-
-  const showConfigModal = () => {
-    const veterinariosBrands = brands.filter(brand => 
-      brand.category === 'veterinarios' || brand.category === 'ambos'
-    )
-    const petshopsBrands = brands.filter(brand => 
-      brand.category === 'petshops' || brand.category === 'ambos'
-    )
-
-    const config = {
-      veterinarios: {
-        title: 'Laboratorios y Marcas',
-        subtitle: '',
-        brands: veterinariosBrands.map(brand => ({
-          name: brand.name,
-          logo: brand.logo,
-          color: brand.color,
-          description: brand.description
-        }))
-      },
-      petshops: {
-        title: 'Laboratorios y Marcas',
-        subtitle: '',
-        brands: petshopsBrands.map(brand => ({
-          name: brand.name,
-          logo: brand.logo,
-          color: brand.color,
-          description: brand.description
-        }))
-      }
+  const handleDelete = async (id) => {
+    if (!window.confirm('¿Eliminar esta marca?')) return
+    try {
+      await deleteBrand(id)
+      await loadBrands()
+    } catch (error) {
+      alert('Error eliminando: ' + error.message)
     }
-
-    showConfigContent(config)
   }
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    )
+  const handleCancel = () => {
+    setForm(emptyForm)
+    setShowForm(false)
+    setEditingBrand(null)
   }
+
+  const filteredBrands = brands.filter(b =>
+    b.category === selectedSection || b.category === 'ambos'
+  )
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Gestión de Marcas y Laboratorios</h2>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-          >
-            Agregar Marca/Laboratorio
-          </button>
-          <button
-            onClick={handlePopulateInitialBrands}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-          >
-            Poblar Marcas/Laboratorios
-          </button>
-          <button
-            onClick={generateStaticConfig}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-          >
-            🔄 Aplicar Cambios
-          </button>
-          <button
-            onClick={showConfigModal}
-            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-          >
-            👁️ Ver Config
-          </button>
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Marcas y Laboratorios</h2>
+          <p className="text-gray-500 mt-1">Configura las marcas que aparecen en la página principal del catálogo.</p>
         </div>
+        <button
+          onClick={() => { setShowForm(!showForm); setEditingBrand(null); setForm(emptyForm) }}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2"
+        >
+          {showForm ? '❌ Cancelar' : '➕ Nueva Marca'}
+        </button>
       </div>
 
-      {/* Formulario para agregar/editar marca */}
-      {(showAddForm || editingBrand) && (
-        <div className="bg-gray-50 rounded-lg p-6 mb-6">
-          <h3 className="text-lg font-semibold mb-4">
-            {editingBrand ? 'Editar Marca/Laboratorio' : 'Agregar Nueva Marca/Laboratorio'}
+      {/* Formulario */}
+      {showForm && (
+        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-8">
+          <h3 className="text-lg font-bold text-gray-800 mb-5">
+            {editingBrand ? 'Editar Marca' : 'Agregar Nueva Marca'}
           </h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nombre de la Marca/Laboratorio
-              </label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre *</label>
               <input
                 type="text"
-                value={editingBrand ? editingBrand.name : newBrand.name}
-                onChange={(e) => {
-                  if (editingBrand) {
-                    setEditingBrand({ ...editingBrand, name: e.target.value })
-                  } else {
-                    setNewBrand({ ...newBrand, name: e.target.value })
-                  }
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={form.name}
+                onChange={(e) => setForm({...form, name: e.target.value})}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 placeholder="Ej: ZOETIS"
               />
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Logo de la Marca
-              </label>
-              
-              {/* Opción 1: Subir archivo */}
-              <div className="mb-3">
-                <label className="block text-xs text-gray-600 mb-1">
-                  Subir logo desde tu computadora:
-                </label>
-                <input
-                  id="logo-file-input"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleLogoFileChange}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                  disabled={uploadingLogo}
-                />
-                {logoFile && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="text-xs text-gray-600">{logoFile.name}</span>
-                    <button
-                      type="button"
-                      onClick={clearLogoSelection}
-                      className="text-xs text-red-600 hover:text-red-800"
-                    >
-                      ✕ Eliminar
-                    </button>
-                  </div>
-                )}
-                {uploadingLogo && (
-                  <div className="mt-2 text-xs text-blue-600">
-                    ⏳ Subiendo logo...
-                  </div>
-                )}
-              </div>
-              
-              {/* Preview del logo */}
-              {(logoPreview || (editingBrand ? editingBrand.logo : newBrand.logo)) && (
-                <div className="mb-3">
-                  <label className="block text-xs text-gray-600 mb-1">
-                    Vista previa:
-                  </label>
-                  <div className="w-32 h-16 bg-white border border-gray-300 rounded-md flex items-center justify-center p-2">
-                    <img
-                      src={logoPreview || (editingBrand ? editingBrand.logo : newBrand.logo)}
-                      alt="Preview"
-                      className="max-w-full max-h-full object-contain"
-                      onError={(e) => {
-                        e.target.style.display = 'none'
-                        e.target.nextSibling.style.display = 'flex'
-                      }}
-                    />
-                    <div className="hidden items-center justify-center text-gray-400 text-xs">
-                      Imagen no disponible
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {/* Opción 2: URL manual (alternativa) */}
-              <div>
-                <label className="block text-xs text-gray-600 mb-1">
-                  O ingresar URL manualmente:
-                </label>
-                <input
-                  type="url"
-                  value={editingBrand ? editingBrand.logo : newBrand.logo}
-                  onChange={(e) => {
-                    if (editingBrand) {
-                      setEditingBrand({ ...editingBrand, logo: e.target.value })
-                    } else {
-                      setNewBrand({ ...newBrand, logo: e.target.value })
-                    }
-                    // Si se ingresa URL manual, limpiar archivo seleccionado
-                    if (e.target.value) {
-                      clearLogoSelection()
-                    }
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  placeholder="https://ejemplo.com/logo.png (opcional si subes archivo)"
-                  disabled={!!logoFile}
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  💡 Si subes un archivo, se usará ese logo. La URL solo se usa si no hay archivo.
-                </p>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Color de Fallback
-              </label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Descripción</label>
               <input
-                type="color"
-                value={editingBrand ? editingBrand.color : newBrand.color}
-                onChange={(e) => {
-                  if (editingBrand) {
-                    setEditingBrand({ ...editingBrand, color: e.target.value })
-                  } else {
-                    setNewBrand({ ...newBrand, color: e.target.value })
-                  }
-                }}
-                className="w-full h-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Categoría
-              </label>
-              <select
-                value={editingBrand ? editingBrand.category : newBrand.category}
-                onChange={(e) => {
-                  if (editingBrand) {
-                    setEditingBrand({ ...editingBrand, category: e.target.value })
-                  } else {
-                    setNewBrand({ ...newBrand, category: e.target.value })
-                  }
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="veterinarios">Veterinarios</option>
-                <option value="petshops">Pet Shops</option>
-                <option value="ambos">Ambos</option>
-              </select>
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Descripción
-              </label>
-              <textarea
-                value={editingBrand ? editingBrand.description : newBrand.description}
-                onChange={(e) => {
-                  if (editingBrand) {
-                    setEditingBrand({ ...editingBrand, description: e.target.value })
-                  } else {
-                    setNewBrand({ ...newBrand, description: e.target.value })
-                  }
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows="3"
-                placeholder="Descripción de la marca..."
+                type="text"
+                value={form.description}
+                onChange={(e) => setForm({...form, description: e.target.value})}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Ej: Medicamentos veterinarios"
               />
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-1">URL del Logo</label>
+              <input
+                type="url"
+                value={form.logo}
+                onChange={(e) => setForm({...form, logo: e.target.value})}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="https://ejemplo.com/logo.png"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                💡 Podes usar URLs de ImgBB, Imgur o Google Drive (formato: https://drive.google.com/uc?export=view&id=TU_ID)
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">¿Dónde se muestra?</label>
+              <select
+                value={form.category}
+                onChange={(e) => setForm({...form, category: e.target.value})}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="veterinarios">🐶 Veterinarias</option>
+                <option value="petshops">🏪 Pet Shops</option>
+                <option value="ambos">✨ Ambos</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Preview del logo */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Color de fondo (si no hay logo)</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={form.color}
+                  onChange={(e) => setForm({...form, color: e.target.value})}
+                  className="w-12 h-10 border border-gray-300 rounded-lg cursor-pointer"
+                />
+                <span className="text-sm text-gray-500">{form.color}</span>
+              </div>
+            </div>
+            {form.logo && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Vista previa</label>
+                <div className="w-40 h-16 bg-white border border-gray-200 rounded-lg flex items-center justify-center p-2">
+                  <img
+                    src={form.logo}
+                    alt="Preview"
+                    className="max-w-full max-h-full object-contain"
+                    onError={(e) => { e.target.style.display = 'none' }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-3">
             <button
-              onClick={() => {
-                setShowAddForm(false)
-                setEditingBrand(null)
-                clearLogoSelection()
-              }}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              onClick={handleCancel}
+              className="px-4 py-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
             >
               Cancelar
             </button>
             <button
-              onClick={editingBrand ? handleUpdateBrand : handleAddBrand}
-              disabled={uploadingLogo}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              onClick={handleSave}
+              disabled={saving}
+              className="bg-green-600 hover:bg-green-700 text-white px-8 py-2.5 rounded-xl font-bold transition-colors disabled:opacity-50"
             >
-              {uploadingLogo ? '⏳ Subiendo...' : (editingBrand ? 'Actualizar' : 'Agregar')}
+              {saving ? 'Guardando...' : (editingBrand ? 'Actualizar' : 'Agregar Marca')}
             </button>
           </div>
         </div>
       )}
 
+      {/* Selector de sección */}
+      <div className="mb-6 bg-gray-50 p-1.5 rounded-lg border border-gray-200 inline-flex text-sm font-medium">
+        <button
+          onClick={() => setSelectedSection('veterinarios')}
+          className={`px-5 py-2 rounded-md transition-colors ${selectedSection === 'veterinarios' ? 'bg-white text-blue-600 shadow-sm border border-gray-200/60' : 'text-gray-500 hover:text-gray-700'}`}
+        >
+          🐶 Veterinarias ({brands.filter(b => b.category === 'veterinarios' || b.category === 'ambos').length})
+        </button>
+        <button
+          onClick={() => setSelectedSection('petshops')}
+          className={`px-5 py-2 rounded-md transition-colors ${selectedSection === 'petshops' ? 'bg-white text-blue-600 shadow-sm border border-gray-200/60' : 'text-gray-500 hover:text-gray-700'}`}
+        >
+          🏪 Pet Shops ({brands.filter(b => b.category === 'petshops' || b.category === 'ambos').length})
+        </button>
+      </div>
+
       {/* Lista de marcas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {brands.map((brand) => (
-          <div key={brand.id} className="bg-gray-50 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-semibold text-gray-900">{brand.name}</h4>
-              <div className="flex gap-1">
+      {loading ? (
+        <div className="text-center py-12 text-gray-500">Cargando marcas...</div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+          {filteredBrands.map((brand) => (
+            <div key={brand.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all group relative">
+              {/* Logo area */}
+              <div className="h-24 bg-gray-50 flex items-center justify-center p-4 border-b border-gray-100">
+                {brand.logo ? (
+                  <img
+                    src={brand.logo}
+                    alt={brand.name}
+                    className="max-w-full max-h-full object-contain"
+                    onError={(e) => {
+                      e.target.style.display = 'none'
+                      e.target.nextSibling.style.display = 'flex'
+                    }}
+                  />
+                ) : null}
+                <div
+                  className={`w-full h-full items-center justify-center text-white text-sm font-bold rounded-lg ${brand.logo ? 'hidden' : 'flex'}`}
+                  style={{ backgroundColor: brand.color }}
+                >
+                  {brand.name}
+                </div>
+              </div>
+
+              {/* Info */}
+              <div className="p-3 text-center">
+                <h4 className="font-bold text-gray-900 text-sm truncate">{brand.name}</h4>
+                {brand.description && (
+                  <p className="text-xs text-gray-500 mt-1 truncate">{brand.description}</p>
+                )}
+                <div className="mt-2">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    brand.category === 'ambos' ? 'bg-purple-100 text-purple-700' :
+                    brand.category === 'petshops' ? 'bg-green-100 text-green-700' :
+                    'bg-blue-100 text-blue-700'
+                  }`}>
+                    {brand.category === 'ambos' ? 'Ambos' : brand.category === 'petshops' ? 'Pet Shop' : 'Vet'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Hover actions */}
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
                 <button
-                  onClick={() => {
-                    setEditingBrand(brand)
-                    setLogoPreview(null)
-                    setLogoFile(null)
-                  }}
-                  className="text-blue-600 hover:text-blue-800 text-sm"
+                  onClick={() => handleEdit(brand)}
+                  className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium text-sm hover:bg-blue-50 transition-colors shadow"
                 >
                   Editar
                 </button>
                 <button
-                  onClick={() => handleDeleteBrand(brand.id)}
-                  className="text-red-600 hover:text-red-800 text-sm"
+                  onClick={() => handleDelete(brand.id)}
+                  className="bg-white text-red-600 px-4 py-2 rounded-lg font-medium text-sm hover:bg-red-50 transition-colors shadow"
                 >
                   Eliminar
                 </button>
               </div>
             </div>
-            
-            <div className="flex items-center gap-3 mb-2">
-              <div 
-                className="w-12 h-8 rounded flex items-center justify-center text-white text-xs font-bold"
-                style={{ backgroundColor: brand.color }}
-              >
-                {brand.name.substring(0, 3)}
-              </div>
-              <div className="flex gap-1">
-                {brand.category === 'ambos' ? (
-                  <>
-                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Vet</span>
-                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Pet</span>
-                  </>
-                ) : (
-                  <span className="text-sm text-gray-600 capitalize">
-                    {brand.category}
-                  </span>
-                )}
-              </div>
-            </div>
-            
-            {brand.description && (
-              <p className="text-sm text-gray-600">{brand.description}</p>
-            )}
-            
-            {brand.logo && (
-              <div className="mt-2">
-                <img 
-                  src={brand.logo} 
-                  alt={brand.name}
-                  className="w-16 h-8 object-contain bg-white rounded border"
-                  onError={(e) => {
-                    e.target.style.display = 'none'
-                  }}
-                />
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+          ))}
 
-      {brands.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
-          No hay marcas/laboratorios configurados. Agrega el primero.
+          {filteredBrands.length === 0 && (
+            <div className="col-span-full py-12 text-center text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+              No hay marcas en esta sección. ¡Crea una!
+            </div>
+          )}
         </div>
       )}
+
+      {/* Instrucciones de logos */}
+      <div className="mt-8 bg-blue-50 p-5 rounded-xl border border-blue-100">
+        <h4 className="text-sm font-bold text-blue-900 mb-2">💡 ¿Cómo subir logos fácilmente?</h4>
+        <ol className="text-sm text-blue-800 space-y-1.5 list-decimal list-inside">
+          <li>Andá a <a href="https://imgbb.com" target="_blank" rel="noopener noreferrer" className="underline font-bold">imgbb.com</a> (gratis, no requiere cuenta)</li>
+          <li>Subí tu imagen del logo</li>
+          <li>Copiá el "Link directo a la imagen" que te da</li>
+          <li>Pegalo en el campo "URL del Logo" acá arriba</li>
+        </ol>
+        <p className="text-xs text-blue-600 mt-3">También sirven: Imgur, Google Drive o cualquier URL pública de imagen.</p>
+      </div>
     </div>
   )
 }
