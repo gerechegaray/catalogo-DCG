@@ -92,136 +92,106 @@ const VeterinariosProductosPage = () => {
         {/* Contenido principal */}
         <div className="w-full lg:flex-1 lg:flex lg:flex-col min-w-0">
         {/* Barra superior con búsqueda */}
-        <div className="bg-white border-b p-2 sm:p-4">
-          {/* Layout móvil: búsqueda en fila separada */}
-          <div className="lg:hidden space-y-3">
-            {/* Filtros móvil */}
-            <MobileCascadingFilters 
-              section="veterinarios" 
-              selectedPath={selectedPath}
-              onPathChange={setSelectedPath}
-              products={getDisplayProducts()}
-            />
-            
-            {/* Búsqueda móvil */}
-            <div className="w-full">
-              <input
-                type="text"
-                placeholder="Buscar productos..."
-                value={searchTerm}
-                onChange={handleSearch}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+        <div className="bg-white/70 backdrop-blur-md border-b sticky top-0 z-40 p-3 sm:p-5">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-4">
+            {/* Filtros móvil (que también sirve como seleccionador rápido en desktop) */}
+            <div className="w-full md:w-auto lg:hidden">
+              <MobileCascadingFilters 
+                section="veterinarios" 
+                selectedPath={selectedPath}
+                onPathChange={setSelectedPath}
+                products={getDisplayProducts()}
               />
             </div>
-          </div>
-
-          {/* Layout desktop: todo en una fila */}
-          <div className="hidden lg:flex items-center gap-4">
-            {/* Filtros móvil */}
-            <MobileCascadingFilters 
-              section="veterinarios" 
-              selectedPath={selectedPath}
-              onPathChange={setSelectedPath}
-              products={getDisplayProducts()}
-            />
             
             {/* Búsqueda */}
-            <div className="flex-1 min-w-0">
+            <div className="relative w-full flex-1">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
               <input
                 type="text"
-                placeholder="Buscar productos..."
+                placeholder="Buscar por nombre, marca o categoría..."
                 value={searchTerm}
                 onChange={handleSearch}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="block w-full pl-11 pr-4 py-3 border-gray-200 border bg-gray-50/50 hover:bg-white focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-400 rounded-2xl transition-all duration-300 text-sm font-medium placeholder:text-gray-400"
               />
+            </div>
+
+            {/* Selector de modo de vista (Desktop) */}
+            <div className="hidden sm:flex items-center gap-1.5 bg-gray-100/50 p-1.5 rounded-2xl border border-gray-100 shrink-0">
+              <button 
+                onClick={() => setViewMode('grid')}
+                className={`p-2.5 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+                title="Cuadrícula"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+              </button>
+              <button 
+                onClick={() => setViewMode('list')}
+                className={`p-2.5 rounded-xl transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+                title="Lista"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16" /></svg>
+              </button>
             </div>
           </div>
         </div>
 
         {/* Contenido */}
-        <div className="flex-1 p-2 sm:p-4 lg:p-6 min-w-0">
-          {/* Estado de carga */}
-          {loading && (
-            <div className="text-center py-16">
-              <div className="text-4xl mb-4">🔄</div>
-              <h2 className="text-xl font-semibold text-gray-700">
-                Cargando productos...
-              </h2>
-              <p className="text-gray-600">
-                Sincronizando con Alegra
+        <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+          {/* Header de Resultados */}
+          <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
+                {selectedPath.length > 0 ? formatToTitle(selectedPath[selectedPath.length - 1]) : 'Catálogo Veterinario'}
+              </h1>
+              <p className="text-gray-500 text-sm font-medium mt-1">
+                <span className="text-blue-600 font-bold">{sortedProducts.length}</span> resultados encontrados
+                {searchTerm && <span> para "<span className="text-gray-900">{searchTerm}</span>"</span>}
               </p>
             </div>
-          )}
+          </div>
 
-          {/* Error */}
-          {error && (
-            <div className="text-center py-16">
-              <div className="text-4xl mb-4">❌</div>
-              <h2 className="text-xl font-semibold text-red-700">
-                Error al cargar productos
-              </h2>
-              <p className="text-gray-600 mb-4">{error}</p>
-              <button 
-                onClick={() => window.location.reload()}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-              >
-                Reintentar
-              </button>
+          {/* Estado de carga */}
+          {loading && (
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <div className="relative w-20 h-20 mb-6">
+                <div className="absolute inset-0 border-4 border-blue-100 rounded-full"></div>
+                <div className="absolute inset-0 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+              <h2 className="text-2xl font-black text-gray-900 mb-2">Cargando catálogo</h2>
+              <p className="text-gray-500 max-w-xs mx-auto">Estamos preparando los mejores productos para ti...</p>
             </div>
           )}
 
           {/* Productos */}
           {!loading && !error && (
             <>
-              {/* Contador de resultados y vista */}
-              <div className="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-3 sm:px-4 rounded-xl shadow-sm border border-gray-150">
-                <p className="text-gray-600 text-sm">
-                  <span className="font-bold text-gray-900">{sortedProducts.length}</span> producto{sortedProducts.length !== 1 ? 's' : ''} encontrado{sortedProducts.length !== 1 ? 's' : ''}
-                  {selectedPath.length > 0 && ` en "${cascadingFiltersService.getPathString(selectedPath)}"`}
-                  {searchTerm && ` que contienen "${searchTerm}"`}
-                </p>
-                <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-lg border border-gray-200">
-                  <button 
-                    onClick={() => setViewMode('grid')}
-                    className={`p-1.5 sm:p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-blue-600 border border-gray-200/60' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
-                    title="Vista de cuadrícula"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-                  </button>
-                  <button 
-                    onClick={() => setViewMode('list')}
-                    className={`p-1.5 sm:p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-blue-600 border border-gray-200/60' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
-                    title="Vista de lista"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
-                  </button>
-                </div>
-              </div>
-
               {/* Grid/Lista de productos */}
               {sortedProducts.length > 0 ? (
                 viewMode === 'grid' ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
                     {sortedProducts.map((product) => (
                         <ProductCardWithCart key={product.id} product={product} viewMode="grid" />
                     ))}
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-4">
+                  <div className="space-y-4">
                     {sortedProducts.map((product) => (
                         <ProductCardWithCart key={product.id} product={product} viewMode="list" />
                     ))}
                   </div>
                 )
               ) : (
-                <div className="text-center py-16">
-                  <div className="text-4xl mb-4">🔍</div>
-                  <h2 className="text-xl font-semibold text-gray-700">
-                    No se encontraron productos
-                  </h2>
-                  <p className="text-gray-600 mb-4">
-                    Intenta ajustar los filtros de búsqueda
-                  </p>
+                <div className="text-center py-24 bg-white rounded-3xl border border-dashed border-gray-200">
+                  <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                  </div>
+                  <h2 className="text-2xl font-black text-gray-900 mb-2">No se encontraron productos</h2>
+                  <p className="text-gray-500 mb-8 max-w-xs mx-auto">Intenta cambiar los filtros o realizar otra búsqueda</p>
                   <button
                     onClick={() => {
                       setSearchTerm('')
@@ -229,9 +199,9 @@ const VeterinariosProductosPage = () => {
                       clearFilters()
                       window.history.pushState({}, '', '/veterinarios/productos')
                     }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-2xl font-bold transition-all shadow-lg shadow-blue-100"
                   >
-                    Limpiar Filtros
+                    Borrar todos los filtros
                   </button>
                 </div>
               )}
@@ -239,6 +209,7 @@ const VeterinariosProductosPage = () => {
           )}
         </div>
       </div>
+
     </div>
     </div>
   )

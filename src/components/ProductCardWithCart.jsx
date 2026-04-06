@@ -2,14 +2,13 @@ import React, { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useProducts } from '../context/ProductContext'
 import { useCart } from '../context/CartContext'
-import { ShoppingCart, Plus, Eye } from 'lucide-react'
+import { ShoppingCart, Plus, Eye, X } from 'lucide-react'
 
 const ProductCardWithCart = ({ product, viewMode = 'grid' }) => {
   const location = useLocation()
   const navigate = useNavigate()
   const { recordProductView, recordViewProductClick } = useProducts()
   const { addToCart } = useCart()
-  const [showImageModal, setShowImageModal] = useState(false)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [quantity, setQuantity] = useState(1)
 
@@ -22,44 +21,25 @@ const ProductCardWithCart = ({ product, viewMode = 'grid' }) => {
     }
   }
 
-  // Manejar vista de producto (cuando se hace clic en imagen o nombre)
+  // Manejar vista de producto
   const handleProductView = () => {
     recordProductView(product.id)
   }
 
   // Manejar click en "Ver Producto"
   const handleViewProduct = (e) => {
-    // Si viene de un evento, prevenir default si es necesario, aunque Link lo maneja
-    console.log('🔍 Debug handleViewProduct (WithCart):', {
-      productId: product.id,
-      productName: product.name,
-      product: product,
-      url: getProductUrl()
-    })
-
-    if (!product.id) {
-      console.error('❌ Error: product.id es undefined', product)
-      return
-    }
-
+    if (!product.id) return
     recordViewProductClick(product.id, product.name || `Producto ${product.id}`)
-    const productUrl = getProductUrl()
-    console.log('🚀 Navigating to:', productUrl)
-    navigate(productUrl)
+    navigate(getProductUrl())
   }
 
   // Manejar agregar al carrito
   const handleAddToCart = async () => {
     if (isAddingToCart) return
-
     setIsAddingToCart(true)
-
-    // Agregar la cantidad especificada
     for (let i = 0; i < quantity; i++) {
       addToCart(product)
     }
-
-    // Resetear cantidad después de agregar
     setTimeout(() => {
       setIsAddingToCart(false)
       setQuantity(1)
@@ -68,90 +48,107 @@ const ProductCardWithCart = ({ product, viewMode = 'grid' }) => {
 
   // Manejar cambio de cantidad
   const handleQuantityChange = (newQuantity) => {
-    if (newQuantity >= 1 && newQuantity <= product.stock) {
+    if (newQuantity >= 1 && newQuantity <= (product.stock || 999)) {
       setQuantity(newQuantity)
     }
   }
 
   // Formatear precio
   const formatPrice = (price) => {
-    // Manejar diferentes formatos de precio
     if (typeof price === 'string') {
       const numericPrice = parseFloat(price.replace(/[^\d.-]/g, ''))
-      return isNaN(numericPrice) ? '$0' : `$${numericPrice.toLocaleString('es-CO')}`
+      return isNaN(numericPrice) ? '$0' : `$${numericPrice.toLocaleString('es-AR')}`
     }
-
     if (typeof price === 'number') {
-      return `$${price.toLocaleString('es-CO')}`
+      return `$${price.toLocaleString('es-AR')}`
     }
-
     return '$0'
   }
 
   // --- RENDERING PARA VISTA DE LISTA ---
   if (viewMode === 'list') {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-all duration-200 flex flex-col sm:flex-row gap-4 sm:gap-6 items-center">
-        {/* Imagen del producto (Pequeña) */}
-        <Link to={getProductUrl()} onClick={handleProductView} className="shrink-0 w-full sm:w-32 h-32">
-          <div className="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative group border border-gray-100">
+      <div className="group bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-gray-100 p-4 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] hover:border-blue-100 transition-all duration-300 flex flex-col sm:flex-row gap-4 sm:gap-8 items-center relative overflow-hidden">
+        {/* Badge de Stock (Desktop) */}
+        {!product.stock && (
+          <div className="absolute top-0 left-0 bg-red-500 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-wider transform -rotate-45 -translate-x-4 translate-y-2.5 z-10 hidden sm:block">
+            Agotado
+          </div>
+        )}
+
+        {/* Imagen del producto */}
+        <Link 
+          to={getProductUrl()} 
+          onClick={handleProductView} 
+          className="shrink-0 w-full sm:w-40 h-40 relative group/img"
+        >
+          <div className="w-full h-full bg-gray-50/50 rounded-2xl flex items-center justify-center cursor-pointer transition-colors duration-300 group-hover:bg-blue-50/30 overflow-hidden border border-gray-100/50">
             {product.image ? (
               <>
                 <img
                   src={product.image}
                   alt={product.name}
-                  className="w-full h-full object-contain p-2"
+                  className="w-full h-full object-contain p-3 transition-transform duration-500 group-hover/img:scale-110"
                   onError={(e) => {
                     e.target.style.display = 'none'
                     e.target.nextSibling.style.display = 'flex'
                   }}
                 />
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/5 transition-opacity rounded-lg">
-                  <Eye className="w-6 h-6 text-gray-700" />
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/img:opacity-100 bg-blue-600/5 backdrop-blur-[1px] transition-all duration-300">
+                  <Eye className="w-8 h-8 text-blue-600 drop-shadow-sm" />
                 </div>
               </>
             ) : (
-              <div className="text-3xl text-gray-400">📦</div>
+              <div className="text-5xl opacity-40 filter grayscale">📦</div>
             )}
           </div>
         </Link>
 
         {/* Información Principal */}
         <div className="flex-1 flex flex-col justify-center min-w-0 w-full text-center sm:text-left">
+          <div className="mb-1">
+            <span className="text-[11px] font-bold text-blue-500 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded">
+              {product.subcategory || 'General'}
+            </span>
+          </div>
           <Link to={getProductUrl()} onClick={handleProductView}>
-            <h3 className="font-semibold text-gray-900 text-lg hover:text-blue-600 transition-colors cursor-pointer truncate">
+            <h3 className="font-bold text-gray-900 text-xl hover:text-blue-600 transition-colors cursor-pointer leading-tight mb-2 line-clamp-1">
               {product.name}
             </h3>
           </Link>
-          <div className="mt-1 flex items-center justify-center sm:justify-start gap-3">
-            <span className="text-xl font-bold text-blue-600">
+          
+          <div className="flex items-center justify-center sm:justify-start gap-4">
+            <span className="text-2xl font-black text-gray-900">
               {formatPrice(product.price)}
             </span>
-            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-              product.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            <span className={`text-[11px] px-2.5 py-1 rounded-full font-bold uppercase tracking-tight ${
+              product.stock > 0 
+                ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
+                : 'bg-red-50 text-red-600 border border-red-100'
             }`}>
-              {product.stock > 0 ? 'En Stock' : 'Sin Stock'}
+              {product.stock > 0 ? `En Stock (${product.stock})` : 'Agotado'}
             </span>
           </div>
+          
           {product.description && (
-            <p className="text-gray-500 text-sm mt-2 line-clamp-2 hidden md:block">
+            <p className="text-gray-500 text-sm mt-3 line-clamp-2 hidden md:block leading-relaxed max-w-xl">
               {product.description}
             </p>
           )}
         </div>
 
-        {/* Controles de Carrito (Derecha) */}
-        <div className="shrink-0 w-full sm:w-auto flex flex-row sm:flex-col items-center gap-3 border-t sm:border-t-0 sm:border-l border-gray-100 pt-3 sm:pt-0 sm:pl-6">
+        {/* Controles de Carrito */}
+        <div className="shrink-0 w-full sm:w-auto flex flex-row sm:flex-col items-center gap-4 border-t sm:border-t-0 sm:border-l border-gray-100 pt-4 sm:pt-0 sm:pl-8">
           {product.stock > 0 ? (
             <>
-              {/* Selector de cantidad compacto */}
-              <div className="flex items-center space-x-1 sm:space-x-2 bg-gray-50 p-1 rounded-lg border border-gray-200">
+              {/* Selector de cantidad premium */}
+              <div className="flex items-center bg-gray-100/80 p-1.5 rounded-xl border border-gray-200/50">
                 <button
                   onClick={() => handleQuantityChange(quantity - 1)}
                   disabled={quantity <= 1}
-                  className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-white hover:shadow-sm rounded disabled:opacity-50 transition-all"
+                  className="w-10 h-10 flex items-center justify-center text-gray-700 hover:bg-white hover:text-blue-600 hover:shadow-sm rounded-lg disabled:opacity-30 transition-all font-bold text-lg"
                 >
-                  -
+                  −
                 </button>
                 <input
                   type="number"
@@ -159,29 +156,29 @@ const ProductCardWithCart = ({ product, viewMode = 'grid' }) => {
                   max={product.stock}
                   value={quantity}
                   onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
-                  className="w-12 text-center bg-transparent border-none text-sm font-medium focus:ring-0 p-0"
+                  className="w-12 text-center bg-transparent border-none text-base font-bold focus:ring-0 p-0 text-gray-900"
                 />
                 <button
                   onClick={() => handleQuantityChange(quantity + 1)}
                   disabled={quantity >= product.stock}
-                  className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-white hover:shadow-sm rounded disabled:opacity-50 transition-all"
+                  className="w-10 h-10 flex items-center justify-center text-gray-700 hover:bg-white hover:text-blue-600 hover:shadow-sm rounded-lg disabled:opacity-30 transition-all"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Botón Agregar compacto */}
+              {/* Botón Agregar Principal */}
               <button
                 onClick={handleAddToCart}
                 disabled={isAddingToCart}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 sm:py-2.5 rounded-lg font-medium transition-colors"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white px-8 py-3.5 rounded-xl font-bold transition-all shadow-lg shadow-orange-200/50 min-w-[160px]"
               >
                 {isAddingToCart ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
                 ) : (
                   <>
-                    <ShoppingCart className="w-4 h-4" />
-                    <span className="sm:hidden lg:inline">Agregar</span>
+                    <ShoppingCart className="w-5 h-5" />
+                    <span>Agregar al carrito</span>
                   </>
                 )}
               </button>
@@ -189,9 +186,9 @@ const ProductCardWithCart = ({ product, viewMode = 'grid' }) => {
           ) : (
             <button
               onClick={handleViewProduct}
-              className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-500 px-4 py-2.5 rounded-lg font-medium"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gray-900 text-white px-8 py-3.5 rounded-xl font-bold transition-all hover:bg-gray-800"
             >
-              <Eye className="w-4 h-4" />
+              <Eye className="w-5 h-5" />
               <span>Ver Info</span>
             </button>
           )}
@@ -202,78 +199,77 @@ const ProductCardWithCart = ({ product, viewMode = 'grid' }) => {
 
   // --- RENDERING PARA VISTA DE CUADRÍCULA (GRID) ---
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
-      {/* Imagen del producto - Enlace a detalle */}
-      <Link to={getProductUrl()} onClick={handleProductView}>
-        <div className="w-full h-48 bg-gray-100 rounded-lg mb-4 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative group">
+    <div className="group bg-white rounded-3xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100 p-5 hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 relative flex flex-col h-full overflow-hidden">
+      {/* Badge de Stock */}
+      <div className={`absolute top-4 right-4 z-10 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+        product.stock > 0 
+          ? 'bg-emerald-50/90 text-emerald-600 border-emerald-100' 
+          : 'bg-red-50/90 text-red-600 border-red-100'
+      }`}>
+        {product.stock > 0 ? 'Disponible' : 'Agotado'}
+      </div>
+
+      {/* Imagen del producto */}
+      <Link to={getProductUrl()} onClick={handleProductView} className="relative block">
+        <div className="w-full aspect-square bg-gray-50/50 rounded-2xl mb-5 flex items-center justify-center cursor-pointer transition-colors duration-300 group-hover:bg-blue-50/20 border border-gray-100/50 overflow-hidden relative">
           {product.image ? (
             <>
               <img
                 src={product.image}
                 alt={product.name}
-                className="w-full h-full object-contain p-2"
+                className="w-full h-full object-contain p-4 transition-transform duration-700 group-hover:scale-110"
                 onError={(e) => {
                   e.target.style.display = 'none'
                   e.target.nextSibling.style.display = 'flex'
                 }}
               />
-              {/* Overlay con ícono de información */}
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+              {/* Click to details overlay */}
+              <div className="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/5 backdrop-blur-[0px] group-hover:backdrop-blur-[1px] transition-all duration-300 flex items-center justify-center">
+                <div className="bg-white/90 p-3 rounded-full shadow-xl translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                  <Eye className="w-6 h-6 text-blue-600" />
                 </div>
               </div>
             </>
           ) : (
-            <div className="text-6xl text-gray-400">
-              📦
-            </div>
+            <div className="text-7xl opacity-40">📦</div>
           )}
         </div>
       </Link>
 
       {/* Información del producto */}
-      <div className="space-y-3">
-        {/* Nombre */}
-        <Link to={getProductUrl()} onClick={handleProductView}>
-          <h3 className="font-semibold text-gray-900 line-clamp-2 text-sm hover:text-blue-600 transition-colors cursor-pointer">
-            {product.name}
-          </h3>
-        </Link>
-
-        {/* Precio */}
-        <div className="text-lg font-bold text-blue-600">
-          {formatPrice(product.price)}
-        </div>
-
-        {/* Stock - Sí/No */}
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-500">Stock:</span>
-          <span className={`text-sm font-medium ${product.stock > 0 ? 'text-green-600' : 'text-red-600'
-            }`}>
-            {product.stock > 0 ? 'Sí' : 'No'}
+      <div className="flex-1 flex flex-col">
+        {/* Categoría y Nombre */}
+        <div className="mb-3">
+          <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.1em] mb-1 block">
+            {product.subcategory || 'General'}
           </span>
+          <Link to={getProductUrl()} onClick={handleProductView}>
+            <h3 className="font-bold text-gray-900 line-clamp-2 text-base leading-snug group-hover:text-blue-600 transition-colors h-[2.5em]">
+              {product.name}
+            </h3>
+          </Link>
         </div>
 
-        {/* Controles de cantidad y botones */}
-        <div className="space-y-3">
-          {/* Selector de cantidad */}
-          {product.stock > 0 && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Cantidad
-              </label>
-              <div className="flex items-center space-x-2">
+        {/* Precio - Grande y destacado */}
+        <div className="mb-5">
+          <div className="text-[13px] text-gray-400 font-medium mb-0.5">Precio de lista</div>
+          <div className="text-2xl font-black text-gray-900 tracking-tighter">
+            {formatPrice(product.price)}
+          </div>
+        </div>
+
+        {/* Controles y Botones */}
+        <div className="mt-auto space-y-3">
+          {product.stock > 0 ? (
+            <>
+              {/* Selector de cantidad compacto premium */}
+              <div className="flex items-center bg-gray-50/80 p-1.5 rounded-2xl border border-gray-100">
                 <button
                   onClick={() => handleQuantityChange(quantity - 1)}
                   disabled={quantity <= 1}
-                  className="w-8 h-8 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400 rounded-lg flex items-center justify-center transition-colors"
+                  className="w-9 h-9 bg-white hover:bg-gray-100 disabled:opacity-30 rounded-xl flex items-center justify-center transition-all border border-gray-200/50 shadow-sm active:scale-90"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                  </svg>
+                  <span className="text-xl font-bold leading-none">−</span>
                 </button>
                 <input
                   type="number"
@@ -281,94 +277,44 @@ const ProductCardWithCart = ({ product, viewMode = 'grid' }) => {
                   max={product.stock}
                   value={quantity}
                   onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
-                  className="w-16 text-center border border-gray-300 rounded-lg py-1 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="flex-1 text-center bg-transparent border-none text-base font-black text-gray-800 p-0 focus:ring-0"
                 />
                 <button
                   onClick={() => handleQuantityChange(quantity + 1)}
                   disabled={quantity >= product.stock}
-                  className="w-8 h-8 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400 rounded-lg flex items-center justify-center transition-colors"
+                  className="w-9 h-9 bg-white hover:bg-gray-100 disabled:opacity-30 rounded-xl flex items-center justify-center transition-all border border-gray-200/50 shadow-sm active:scale-90"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-5 h-5" />
                 </button>
               </div>
-            </div>
+
+              {/* Botón Principal Agregar */}
+              <button
+                onClick={handleAddToCart}
+                disabled={isAddingToCart}
+                className="w-full py-3.5 px-4 rounded-2xl font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center space-x-2 bg-orange-500 text-white hover:bg-orange-600 active:scale-95 shadow-md shadow-orange-100"
+              >
+                {isAddingToCart ? (
+                  <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <>
+                    <Plus className="w-5 h-5" />
+                    <span>Agregar al pedido</span>
+                  </>
+                )}
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={handleViewProduct}
+              className="w-full py-4 px-4 rounded-2xl font-black text-sm uppercase tracking-wider bg-gray-100 text-gray-400 cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <span>Sin Stock</span>
+              <X className="w-5 h-5" />
+            </button>
           )}
-
-          {/* Botón agregar al carrito */}
-          <button
-            onClick={handleAddToCart}
-            disabled={product.stock <= 0 || isAddingToCart}
-            className={`w-full py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 ${product.stock > 0 && !isAddingToCart
-                ? 'bg-orange-600 text-white hover:bg-orange-700'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
-          >
-            {isAddingToCart ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Agregando...</span>
-              </>
-            ) : (
-              <>
-                <ShoppingCart className="w-4 h-4" />
-                <span>Agregar ({quantity})</span>
-              </>
-            )}
-          </button>
-
-          {/* Botón de ver producto */}
-          <button
-            onClick={handleViewProduct}
-            disabled={product.stock <= 0}
-            className={`w-full py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 ${product.stock > 0
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
-          >
-            <Eye className="w-4 h-4" />
-            <span>{product.stock > 0 ? 'Ver Producto' : 'Sin Stock'}</span>
-          </button>
         </div>
       </div>
-
-      {/* Modal para imagen expandida */}
-      {showImageModal && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
-          onClick={() => setShowImageModal(false)}
-        >
-          <div className="relative max-w-4xl max-h-full">
-            <img
-              src={product.image}
-              alt={product.name}
-              className="max-w-full max-h-full object-contain rounded-lg"
-            />
-            {/* Botón de cerrar */}
-            <button
-              onClick={() => setShowImageModal(false)}
-              className="absolute top-4 right-4 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full p-2 transition-all"
-            >
-              <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            {/* Información del producto en el modal */}
-            <div className="absolute bottom-4 left-4 right-4 bg-white bg-opacity-90 rounded-lg p-4">
-              <h3 className="font-semibold text-gray-900 text-lg">{product.name}</h3>
-              {product.description && (
-                <p className="text-sm text-gray-600 mt-1">{product.description}</p>
-              )}
-              <div className="flex items-center justify-between mt-2">
-                <span className="text-lg font-bold text-blue-600">{formatPrice(product.price)}</span>
-                <span className={`text-sm font-medium ${product.stock > 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                  Stock: {product.stock > 0 ? 'Sí' : 'No'}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
