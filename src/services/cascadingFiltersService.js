@@ -151,45 +151,73 @@ class CascadingFiltersService {
     return section === 'veterinarios' ? this.veterinariosFilters : this.petshopsFilters
   }
 
+  // Categorías que tienen un nivel extra de "Laboratorio" antes de subcategoría
+  hasLabLevel(section, mainCategory) {
+    if (section === 'veterinarios' && mainCategory === 'medicamentos') return true
+    if (section === 'petshops' && mainCategory === 'salud-comportamiento') return true
+    return false
+  }
+
   // Obtener opciones dinámicas para el nivel actual (basado en datos reales de Alegra)
   getCurrentLevelOptions(section, selectedPath = [], products = []) {
     if (selectedPath.length === 0) {
-      // Nivel 1: categorías principales (ya definidas)
+      // Nivel 1: categorías principales
       const options = Object.keys(this.getFiltersForSection(section))
       return options
-    } else if (selectedPath.length === 1) {
-      // Nivel 2: subcategorías (itemCategory.name de Alegra)
-      const mainCategory = selectedPath[0]
-      const filteredProducts = this.filterByMainCategory(section, mainCategory, products)
-      
-      // Extraer subcategorías únicas (usando subcategory procesado por alegraService)
-      const subcategories = [...new Set(
-        filteredProducts
-          .map(product => product.subcategory)
-          .filter(subcategory => subcategory) // Filtrar valores nulos/undefined/vacíos
-      )]
-      
-      return subcategories.sort()
-    } else if (selectedPath.length === 2) {
-      // Nivel 3: marcas/laboratorios (description de Alegra)
-      const mainCategory = selectedPath[0]
-      const subcategory = selectedPath[1]
-      
-      // Filtrar productos por categoría y subcategoría
-      let filteredProducts = this.filterByMainCategory(section, mainCategory, products)
-      filteredProducts = this.filterBySubcategory(section, mainCategory, subcategory, filteredProducts)
-      
-      // Extraer description únicos
-      const brands = [...new Set(
-        filteredProducts
-          .map(product => product.description)
-          .filter(description => description) // Filtrar valores nulos/undefined
-      )]
-      
-      return brands.sort()
     }
-    
-    return []
+
+    const mainCategory = selectedPath[0]
+    const usesLabLevel = this.hasLabLevel(section, mainCategory)
+
+    if (usesLabLevel) {
+      // --- CATEGORÍAS CON NIVEL LABORATORIO ---
+      if (selectedPath.length === 1) {
+        // Nivel 2: Laboratorios (description de Alegra)
+        const filteredProducts = this.filterByMainCategory(section, mainCategory, products)
+        const labs = [...new Set(
+          filteredProducts
+            .map(product => product.description)
+            .filter(d => d)
+        )]
+        return labs.sort()
+      } else if (selectedPath.length === 2) {
+        // Nivel 3: Subcategorías dentro de ese laboratorio
+        const lab = selectedPath[1]
+        let filteredProducts = this.filterByMainCategory(section, mainCategory, products)
+        filteredProducts = filteredProducts.filter(p => (p.description || '').toLowerCase() === lab.toLowerCase())
+        const subcategories = [...new Set(
+          filteredProducts
+            .map(product => product.subcategory)
+            .filter(s => s)
+        )]
+        return subcategories.length > 0 ? subcategories.sort() : null
+      }
+      return null
+    } else {
+      // --- CATEGORÍAS NORMALES (sin nivel laboratorio) ---
+      if (selectedPath.length === 1) {
+        // Nivel 2: subcategorías
+        const filteredProducts = this.filterByMainCategory(section, mainCategory, products)
+        const subcategories = [...new Set(
+          filteredProducts
+            .map(product => product.subcategory)
+            .filter(subcategory => subcategory)
+        )]
+        return subcategories.sort()
+      } else if (selectedPath.length === 2) {
+        // Nivel 3: marcas/laboratorios (description de Alegra)
+        const subcategory = selectedPath[1]
+        let filteredProducts = this.filterByMainCategory(section, mainCategory, products)
+        filteredProducts = this.filterBySubcategory(section, mainCategory, subcategory, filteredProducts)
+        const brands = [...new Set(
+          filteredProducts
+            .map(product => product.description)
+            .filter(description => description)
+        )]
+        return brands.sort()
+      }
+      return []
+    }
   }
 
   // Verificar si el nivel actual tiene productos (es el último nivel)
@@ -245,22 +273,30 @@ class CascadingFiltersService {
     if (path.length === 0) return products.length
     
     let filteredProducts = products
+    const mainCategory = path[0]
+    const usesLabLevel = this.hasLabLevel(section, mainCategory)
     
     // Aplicar filtros progresivos
     path.forEach((level, index) => {
       if (index === 0) {
-        // Filtro por categoría principal
         filteredProducts = this.filterByMainCategory(section, level, filteredProducts)
       } else if (index === 1) {
-        // Filtro por subcategoría
-        filteredProducts = this.filterBySubcategory(section, path[0], level, filteredProducts)
+        if (usesLabLevel) {
+          // Nivel 2 = Laboratorio (description)
+          filteredProducts = filteredProducts.filter(p => (p.description || '').toLowerCase() === level.toLowerCase())
+        } else {
+          filteredProducts = this.filterBySubcategory(section, path[0], level, filteredProducts)
+        }
       } else if (index === 2) {
-        // Filtro por marca/laboratorio
-        filteredProducts = this.filterByBrand(section, path[0], path[1], level, filteredProducts)
+        if (usesLabLevel) {
+          // Nivel 3 = Subcategory dentro de un lab
+          filteredProducts = this.filterBySubcategory(section, path[0], level, filteredProducts)
+        } else {
+          filteredProducts = this.filterByBrand(section, path[0], path[1], level, filteredProducts)
+        }
       }
     })
     
-    // console.log(`🔢 Conteo para ruta ${path.join(' → ')}: ${filteredProducts.length} productos`)
     return filteredProducts.length
   }
 
@@ -426,14 +462,26 @@ class CascadingFiltersService {
     if (selectedPath.length === 0) return products
     
     let filteredProducts = products
+    const mainCategory = selectedPath[0]
+    const usesLabLevel = this.hasLabLevel(section, mainCategory)
     
     selectedPath.forEach((level, index) => {
       if (index === 0) {
         filteredProducts = this.filterByMainCategory(section, level, filteredProducts)
       } else if (index === 1) {
-        filteredProducts = this.filterBySubcategory(section, selectedPath[0], level, filteredProducts)
+        if (usesLabLevel) {
+          // Nivel 2 = Laboratorio (description)
+          filteredProducts = filteredProducts.filter(p => (p.description || '').toLowerCase() === level.toLowerCase())
+        } else {
+          filteredProducts = this.filterBySubcategory(section, selectedPath[0], level, filteredProducts)
+        }
       } else if (index === 2) {
-        filteredProducts = this.filterByBrand(section, selectedPath[0], selectedPath[1], level, filteredProducts)
+        if (usesLabLevel) {
+          // Nivel 3 = Subcategory dentro de un lab
+          filteredProducts = this.filterBySubcategory(section, selectedPath[0], level, filteredProducts)
+        } else {
+          filteredProducts = this.filterByBrand(section, selectedPath[0], selectedPath[1], level, filteredProducts)
+        }
       }
     })
     

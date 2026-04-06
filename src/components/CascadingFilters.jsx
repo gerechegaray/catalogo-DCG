@@ -50,20 +50,23 @@ const CascadingFilters = ({ section = 'veterinarios', selectedPath = [], onPathC
     clearFilters()
   }
 
+  // Determinar si estamos en el nivel de laboratorios
+  const isLabLevel = selectedPath.length === 1 && cascadingFiltersService.hasLabLevel(section, selectedPath[0])
+
   // Obtener opciones y conteos actuales
   const currentOptions = getCurrentOptions()
   const currentCounts = getCurrentCounts()
 
-  if (!currentOptions) {
+  if (!currentOptions || (Array.isArray(currentOptions) && currentOptions.length === 0)) {
     return (
       <div className="w-72 bg-white border-r border-gray-200 text-gray-800 p-6 h-screen overflow-y-auto hidden lg:block sticky top-0">
         <div className="text-center text-gray-500 mt-10">
-          <p>No hay más opciones disponibles</p>
+          <p>Mostrando todos los productos</p>
           <button
             onClick={goBack}
             className="mt-4 bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-lg font-medium transition-colors"
           >
-            Volver Atrás
+            ← Volver Atrás
           </button>
         </div>
       </div>
@@ -112,6 +115,14 @@ const CascadingFilters = ({ section = 'veterinarios', selectedPath = [], onPathC
           </button>
         )}
       </div>
+
+      {/* Etiqueta del nivel actual */}
+      {isLabLevel && (
+        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-purple-700 bg-purple-50 px-3 py-2 rounded-lg border border-purple-100">
+          <span>🔬</span>
+          <span>Filtrar por Laboratorio</span>
+        </div>
+      )}
 
       {/* Opciones del nivel actual */}
       <div className="space-y-1.5">
