@@ -882,103 +882,56 @@ class CacheService {
   }
 
   // ============================================
-  // NUEVOS MÉTODOS: USANDO FIREBASE STORAGE
+  // Catálogo: JSON estático /catalog/*.json (repo + Vercel; ver GitHub Actions)
+  // Fallback: Firestore (p. ej. pruebas locales sin JSON en public/catalog)
   // ============================================
-  
-  /**
-   * Obtener productos desde Firebase Storage
-   * Este es el nuevo método que reemplaza la lectura desde Firestore
-   * @param {string} userType - 'vet' o 'pet'
-   * @returns {Promise<Array>} - Array de productos
-   */
-  async getProductsFromStorage(userType = 'vet') {
-    try {
-      console.log(`📥 Obteniendo productos desde Storage para ${userType}...`)
-      const products = await storageService.downloadCatalog(userType)
-      console.log(`✅ ${products.length} productos obtenidos desde Storage`)
-      return products
-    } catch (error) {
-      console.error('❌ Error obteniendo productos desde Storage:', error)
-      // Fallback: intentar obtener desde Firestore
-      console.log('🔄 Intentando fallback con Firestore...')
-      return this.getProductsFromCache()
-    }
-  }
 
   /**
-   * Verificar si los archivos del catálogo existen en Storage
+   * Catálogo desde /catalog/*.json; si falla o viene vacío, Firestore.
    * @param {string} userType - 'vet' o 'pet'
-   * @returns {Promise<boolean>}
-   */
-  async isStorageCatalogAvailable(userType = 'vet') {
-    try {
-      return await storageService.checkCatalogExists(userType)
-    } catch (error) {
-      console.error('❌ Error verificando catálogo en Storage:', error)
-      return false
-    }
-  }
-
-  /**
-   * Método híbrido: intenta Storage primero, luego Firestore
-   * @param {string} userType - 'vet' o 'pet'
-   * @returns {Promise<Array>} - Array de productos
+   * @returns {Promise<Array>}
    */
   async getProductsHybrid(userType = 'vet') {
-    const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    
-    if (isDevelopment) {
-      // En desarrollo: usar Firestore directamente (evita CORS)
-      console.log('🔧 Desarrollo: Usando Firestore')
-      return this.getProductsFromCache()
-    } else {
-      // En producción: usar Storage con fallback a Firestore
-      console.log('✅ Producción: Intentando desde Storage...')
-      try {
-        return await this.getProductsFromStorage(userType)
-      } catch (error) {
-        console.error('❌ Error con Storage, fallback a Firestore')
-        return this.getProductsFromCache()
+    try {
+      console.log('📥 Cargando catálogo desde /catalog/...')
+      const products = await storageService.downloadCatalog(userType)
+      if (products && products.length > 0) {
+        return products
       }
+    } catch (error) {
+      console.warn('⚠️ Catálogo estático no disponible:', error.message)
     }
+    console.log('🔄 Fallback: productos en Firestore (cache de desarrollo)')
+    return this.getProductsFromCache()
   }
 
   /**
-   * Verificar si el cache está actualizado
-   * Nueva versión que verifica tanto Storage como Firestore
    * @returns {Promise<boolean>}
    */
   async isCacheUpToDateHybrid(userType = 'vet') {
     try {
-      // Verificar primero si existe catálogo en Storage
-      const storageExists = await this.isStorageCatalogAvailable(userType)
-      
-      if (storageExists) {
-        // Si existe en Storage, considerar que está actualizado
-        // (la actualización diaria se hace desde la Cloud Function)
+      const staticOk = await storageService.checkStaticCatalogExists(userType)
+      if (staticOk) {
         return true
       }
-      
-      // Si no existe en Storage, verificar el cache viejo de Firestore
       return await this.isCacheUpToDate()
     } catch (error) {
-      console.error('❌ Error verificando cache híbrido:', error)
+      console.error('❌ Error verificando catálogo:', error)
       return false
     }
   }
 
   /**
-   * Forzar recarga del catálogo desde Storage
-   * Útil para actualizaciones manuales en el admin
-   * @param {string} userType - 'vet' o 'pet'
-   * @returns {Promise<Array>} - Array de productos
+   * Fuerza nueva descarga del JSON estático (invalida cache en memoria).
+   * @param {string} userType
+   * @returns {Promise<Array>}
    */
   async refreshCatalogFromStorage(userType = 'vet') {
     try {
-      console.log(`🔄 Forzando recarga del catálogo ${userType}...`)
+      console.log(`🔄 Recargando catálogo ${userType} desde /catalog/...`)
       return await storageService.refreshCatalog(userType)
     } catch (error) {
-      console.error('❌ Error recargando catálogo desde Storage:', error)
+      console.error('❌ Error recargando catálogo:', error)
       throw error
     }
   }

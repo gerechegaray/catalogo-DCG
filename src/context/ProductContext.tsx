@@ -266,19 +266,15 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
     try {
       dispatch({ type: actionTypes.SET_LOADING, payload: true })
       
-      // NUEVO: Usar el método híbrido que intenta Storage primero
-      // Este método intenta descargar desde Firebase Storage (más eficiente)
-      // y si falla, usa Firestore como fallback (para retrocompatibilidad)
+      // Catálogo: /catalog/*.json (mismo origen; generado por GitHub Actions → syncAlegra).
+      // Si no hay JSON o falla la petición, fallback a Firestore (desarrollo / datos de prueba).
       const products = await cacheService.getProductsHybrid(currentType)
       
       if (products && products.length > 0) {
-        // Productos obtenidos exitosamente desde Storage o Firestore
         dispatch({ type: actionTypes.SET_PRODUCTS, payload: products })
         dispatch({ type: actionTypes.SET_CACHE_STATUS, payload: 'valid' })
       } else {
-        // Ya no consultamos directamente a Alegra desde el cliente por optimización de performance.
-        // Todo depende de la Cloud Function / Script que genera los JSON en Storage.
-        console.warn('⚠️ No se encontraron catálogos en Storage/Firestore. Debe ejecutarse el script en el backend.')
+        console.warn('⚠️ No hay productos en /catalog/ ni en Firestore. Ejecutá el workflow de catálogo o sync local (npm run sync:catalog).')
         dispatch({ type: actionTypes.SET_PRODUCTS, payload: [] }) // Catálogo vacío temporal
         dispatch({ type: actionTypes.SET_ERROR, payload: 'El catálogo se está actualizando o no está disponible. Por favor, intenta en unos minutos.' })
         dispatch({ type: actionTypes.SET_CACHE_STATUS, payload: 'error' })
