@@ -2,10 +2,15 @@ import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
 import { buildLegacyCatalogFiles, normalizeAlegraProduct } from './catalogBuilder.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Local: carga .env en la raíz del repo. CI (GitHub Actions): no pisa variables ya definidas.
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
 const PUBLIC_DIR = path.join(__dirname, '..', 'public', 'catalog');
 
 const ALEGRA_API_KEY = process.env.ALEGRA_API_KEY;
@@ -101,17 +106,22 @@ async function syncCatalogToPublic() {
       console.log('⚙️  Modo: excluir del catálogo productos activos con precio ≤ 0');
     }
 
-    if (!ALEGRA_API_KEY || typeof ALEGRA_API_KEY !== 'string') {
-      throw new Error('ALEGRA_API_KEY no definida o inválida');
+    const key = typeof ALEGRA_API_KEY === 'string' ? ALEGRA_API_KEY.trim() : '';
+    if (!key) {
+      console.error('❌ ALEGRA_API_KEY no definida');
+      console.error('👉 Agregala en un archivo .env en la raíz del proyecto (copiá .env.example) o exportá la variable antes de ejecutar.');
+      console.error('   Ejemplo: export ALEGRA_API_KEY="email:token"   (Git Bash)');
+      console.error('   Luego: npm run sync:catalog');
+      process.exit(1);
     }
 
     let authHeader = '';
-    if (ALEGRA_API_KEY.startsWith('Basic ')) {
-      authHeader = ALEGRA_API_KEY;
-    } else if (!ALEGRA_API_KEY.includes('@') && !ALEGRA_API_KEY.includes(':') && ALEGRA_API_KEY.length > 20) {
-      authHeader = `Basic ${ALEGRA_API_KEY}`;
+    if (key.startsWith('Basic ')) {
+      authHeader = key;
+    } else if (!key.includes('@') && !key.includes(':') && key.length > 20) {
+      authHeader = `Basic ${key}`;
     } else {
-      const rawKey = ALEGRA_API_KEY.replace(/:$/, '');
+      const rawKey = key.replace(/:$/, '');
       authHeader = `Basic ${Buffer.from(rawKey).toString('base64')}`;
     }
 
