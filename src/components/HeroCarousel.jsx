@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { CreditCard, Truck, MessageCircle } from 'lucide-react'
 import { useProducts } from '../context/ProductContext'
 
 const HeroCarousel = () => {
@@ -57,7 +58,7 @@ const HeroCarousel = () => {
   }, [slides.length])
 
   return (
-    <div className="relative h-[500px] overflow-hidden bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700">
+    <div className="relative h-[320px] md:h-[500px] overflow-hidden bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700">
       {/* Slides */}
       {slides.map((slide, index) => (
         <div
@@ -79,7 +80,7 @@ const HeroCarousel = () => {
             <div className="relative h-full flex items-center">
               <div className="container mx-auto px-4">
                 <div className="max-w-3xl">
-                  <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 border border-white/20 shadow-2xl">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl md:rounded-3xl p-5 md:p-8 border border-white/20 shadow-2xl">
                     <div className="flex items-center mb-4">
                       <div className={`px-4 py-2 rounded-full text-sm font-bold mr-4 ${
                         slide.badge === 'NUEVO' ? 'bg-green-500 text-white' :
@@ -90,13 +91,13 @@ const HeroCarousel = () => {
                         {slide.badge}
                       </div>
                     </div>
-                    <h2 className="text-5xl font-bold text-white mb-4 drop-shadow-2xl">
+                    <h2 className="text-2xl md:text-5xl font-bold text-white mb-3 md:mb-4 drop-shadow-2xl">
                       {slide.title}
                     </h2>
-                    <h3 className="text-3xl font-semibold text-blue-200 mb-6 drop-shadow-lg">
+                    <h3 className="text-lg md:text-3xl font-semibold text-blue-200 mb-3 md:mb-6 drop-shadow-lg">
                       {slide.subtitle}
                     </h3>
-                    <p className="text-xl text-blue-100 mb-8 leading-relaxed">
+                    <p className="text-sm md:text-xl text-blue-100 mb-5 md:mb-8 leading-relaxed hidden sm:block">
                       {slide.description}
                     </p>
                     <a
@@ -132,15 +133,21 @@ const HeroCarousel = () => {
       </div>
 
       {/* Badges promocionales */}
-      <div className="absolute top-8 right-8 flex flex-col space-y-3">
-        <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-2xl text-sm font-bold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-          💳 CRÉDITOS CON DNI
+      <div className="absolute top-4 md:top-8 right-4 md:right-8 flex flex-col space-y-2 md:space-y-3">
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-3 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl text-xs md:text-sm font-bold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2">
+          <CreditCard className="w-4 h-4 shrink-0" />
+          <span className="hidden sm:inline">CRÉDITOS CON DNI</span>
+          <span className="sm:hidden">CRÉDITOS</span>
         </div>
-        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-2xl text-sm font-bold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-          🚚 ENVÍO GRATIS
+        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-3 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl text-xs md:text-sm font-bold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2">
+          <Truck className="w-4 h-4 shrink-0" />
+          <span className="hidden sm:inline">ENVÍO GRATIS</span>
+          <span className="sm:hidden">ENVÍO</span>
         </div>
-        <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-2xl text-sm font-bold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-          📞 WHATSAPP DIRECTO
+        <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl text-xs md:text-sm font-bold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2">
+          <MessageCircle className="w-4 h-4 shrink-0" />
+          <span className="hidden sm:inline">WHATSAPP DIRECTO</span>
+          <span className="sm:hidden">CHAT</span>
         </div>
       </div>
     </div>

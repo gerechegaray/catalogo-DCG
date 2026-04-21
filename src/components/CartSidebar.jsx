@@ -75,12 +75,18 @@ const CartSidebar = ({ isOpen, onClose }) => {
   }
 
   return (
-    <div
-      className={`fixed inset-0 bg-black bg-opacity-50 z-50 transform ${
+    <div className={`fixed inset-0 z-50 ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+      {/* Backdrop */}
+      <div
+        className={`absolute inset-0 bg-black transition-opacity duration-300 ease-in-out ${
+          isOpen ? 'opacity-50' : 'opacity-0'
+        }`}
+        onClick={onClose}
+      />
+      {/* Panel */}
+      <div className={`fixed right-0 top-0 h-full w-full md:w-96 bg-white shadow-2xl p-6 flex flex-col transition-transform duration-300 ease-in-out ${
         isOpen ? 'translate-x-0' : 'translate-x-full'
-      } transition-transform duration-300 ease-in-out`}
-    >
-      <div className="fixed right-0 top-0 h-full w-full md:w-96 bg-white shadow-2xl p-6 flex flex-col">
+      }`}>
         <div className="flex justify-between items-center mb-6 border-b pb-4">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center">
             <ShoppingCart className="mr-2" /> Tu Pedido ({totalItems})

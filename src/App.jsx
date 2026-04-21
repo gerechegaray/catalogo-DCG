@@ -62,7 +62,7 @@ function App() {
               
               {/* Páginas de presentación */}
               <Route path="/veterinarios" element={
-                <ProtectedRoute requireAuth={false}>
+                <ProtectedRoute section="veterinarios">
                   <CartProvider>
                     <PageTracker>
                       <div>
@@ -76,9 +76,9 @@ function App() {
                   </CartProvider>
                 </ProtectedRoute>
               } />
-              
+
               <Route path="/petshops" element={
-                <ProtectedRoute requireAuth={false}>
+                <ProtectedRoute section="petshops">
                   <CartProvider>
                     <PageTracker>
                       <div>
@@ -92,10 +92,10 @@ function App() {
                   </CartProvider>
                 </ProtectedRoute>
               } />
-              
+
               {/* Páginas de productos */}
               <Route path="/veterinarios/productos" element={
-                <ProtectedRoute requireAuth={false}>
+                <ProtectedRoute section="veterinarios">
                   <CartProvider>
                     <PageTracker>
                       <div>
@@ -109,9 +109,9 @@ function App() {
                   </CartProvider>
                 </ProtectedRoute>
               } />
-            
+
             <Route path="/petshops/productos" element={
-              <ProtectedRoute requireAuth={false}>
+              <ProtectedRoute section="petshops">
                 <CartProvider>
                   <PageTracker>
                     <div>
@@ -125,10 +125,10 @@ function App() {
                 </CartProvider>
               </ProtectedRoute>
             } />
-            
+
             {/* Páginas de detalle de producto */}
             <Route path="/veterinarios/productos/:productId" element={
-              <ProtectedRoute requireAuth={false}>
+              <ProtectedRoute section="veterinarios">
                 <CartProvider>
                   <PageTracker>
                     <div>
@@ -142,9 +142,9 @@ function App() {
                 </CartProvider>
               </ProtectedRoute>
             } />
-            
+
             <Route path="/petshops/productos/:productId" element={
-              <ProtectedRoute requireAuth={false}>
+              <ProtectedRoute section="petshops">
                 <CartProvider>
                   <PageTracker>
                     <div>
